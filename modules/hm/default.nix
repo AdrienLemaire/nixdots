@@ -4,6 +4,7 @@
   imports = [
     # ./example.nix - add your modules here
     ./files.nix
+    ./fonts.nix
     ./common
   ];
 

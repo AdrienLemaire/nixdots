@@ -37,7 +37,7 @@
       hydenixConfig = inputs.hydenix.inputs.hydenix-nixpkgs.lib.nixosSystem {
         inherit (inputs.hydenix.lib) system;
         specialArgs = { inherit inputs pkgs-unstable; };
-        modules = [ ./config.nix ];
+        modules = [ ./host/config.nix ];
       };
     in {
       nixosConfigurations.nixos = hydenixConfig;

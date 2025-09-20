@@ -30,11 +30,13 @@ in {
     inputs.hydenix.inputs.home-manager.nixosModules.home-manager
     ./hardware-configuration.nix
     inputs.hydenix.lib.nixOsModules
-    ./modules/system
+    ../modules/system
     ./environment.nix
     ./services.nix
     ./systemd.nix
-    ./nix-modules.nix
+    ../modules/system/input.nix
+    ../modules/system/development.nix
+    ../modules/system/security.nix
 
     # Hardware configurations
     inputs.hydenix.inputs.nixos-hardware.nixosModules.common-cpu-intel
@@ -51,7 +53,7 @@ in {
     users."dori" = { ... }: {
       imports = [
         inputs.hydenix.lib.homeModules
-        ./modules/hm
+        ../modules/hm
         inputs.nix-index-database.homeModules.nix-index
       ];
     };
@@ -98,6 +100,7 @@ in {
       # Add other groups as needed
     ];
     shell = pkgs.zsh; # pkgs.nushell
+    homeMode = "701";
   };
 }
 
