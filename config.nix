@@ -35,32 +35,9 @@ in {
     ./services.nix
     ./systemd.nix
     ./nix-modules.nix
-    # inputs.whisper-overlay.nixosModules.default
-    # ./nordvpn.nix
 
-    # === GPU-specific configurations ===
-
-    /* For drivers, we are leveraging nixos-hardware
-       Most common drivers are below, but you can see more options here: https://github.com/NixOS/nixos-hardware
-    */
-
-    #! EDIT THIS SECTION
-    # For NVIDIA setups
-    # inputs.hydenix.inputs.nixos-hardware.nixosModules.common-gpu-nvidia
-    # inputs.hydenix.inputs.nixos-hardware.nixosModules.common-gpu-nvidia-nonmodeset
-
-    # For AMD setups
-    # inputs.hydenix.inputs.nixos-hardware.nixosModules.common-gpu-amd
-
-    # === CPU-specific configurations ===
-    # For AMD CPUs
-    # inputs.hydenix.inputs.nixos-hardware.nixosModules.common-cpu-amd
-    # inputs.hydenix.inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
-
-    # For Intel CPUs
+    # Hardware configurations
     inputs.hydenix.inputs.nixos-hardware.nixosModules.common-cpu-intel
-
-    # === Other common modules ===
     inputs.hydenix.inputs.nixos-hardware.nixosModules.common-pc
     inputs.hydenix.inputs.nixos-hardware.nixosModules.common-pc-ssd
   ];
@@ -75,17 +52,8 @@ in {
       imports = [
         inputs.hydenix.lib.homeModules
         ./modules/hm
-        # ./home-modules.nix
-        # Nix-index-database - for comma and command-not-found
         inputs.nix-index-database.homeModules.nix-index
       ];
-
-      # modules = {
-      #   common = {
-      #     obs.enable = true;
-      #     zsh.enable = true;
-      #   };
-      # };
     };
   };
 
@@ -103,9 +71,7 @@ in {
       useSystemdBoot = true; # disable for GRUB
       grubTheme = "Pochita"; # "Retroboot" or "Pochita"
       grubExtraConfig = ""; # additional GRUB configuration
-      # kernelPackages = pkgs.linuxPackages_zen; # default zen kernel
-      # linuxPackages_zen and linuxPackages_latest break suspend
-      kernelPackages = pkgs.linuxPackages;
+      kernelPackages = pkgs.linuxPackages; # zen kernel breaks suspend
     };
     gaming.enable = true; # enable gaming module
     hardware.enable = true; # enable hardware module

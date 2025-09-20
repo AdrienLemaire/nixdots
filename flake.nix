@@ -19,14 +19,8 @@
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # ghostty.url = "github:ghostty-org/ghostty";
     mcp-hub.url = "github:ravitemer/mcp-hub";
     mcphub-nvim.url = "github:ravitemer/mcphub.nvim";
-    # whisper-overlay = {
-    #   # url = "github:oddlama/whisper-overlay";
-    #   url = "path:/home/dori/Projects/3rdPart/ai/whisper-overlay";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
 
     older-pipewire.url = "github:NixOS/nixpkgs/2631b0b7abcea6e640ce31cd78ea58910d31e650";
   };

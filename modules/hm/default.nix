@@ -7,10 +7,7 @@
     ./common
   ];
 
-  # home-manager options go here
   home.packages = [
-    # vscode - hydenix's vscode version
-    # userPkgs.vscode - your personal nixpkgs version
     pkgs.nu_scripts
   ];
 
@@ -65,8 +62,6 @@
 
         input {
             kb_layout = us_qwerty-fr
-            # kb_file = "/home/dori/Projects/Perso/hydenix/overrides.nix"
-            # kb_options = compose:ralt
             resolve_binds_by_sym = 1
             follow_mouse = 1
 

@@ -50,20 +50,13 @@
     gimp3-with-plugins
 
     # TERMINALS
-    # inputs.ghostty.packages.x86_64-linux.default
     ghostty
 
     # AI
-    # openai-whisper
     aider-chat
     goose-cli
     userPkgs.claude-code
     inputs.mcp-hub.packages.x86_64-linux.default
-    # vectorcode uses the chromadb service
-    # userPkgs.vectorcode
-    # pkgs-unstable.vectorcode
-    # vectorcode-with-mcp
-    # inputs.whisper-overlay.packages.x86_64-linux.default
     n8n
     userPkgs.gemini-cli
 
@@ -77,7 +70,6 @@
     inshellisense
 
     # DEVELOPMENT TOOLS
-    # volta
     nodejs_24
     marksman
     pipx
@@ -87,7 +79,6 @@
     vimPlugins.LazyVim
     ghostscript # needed by snacks.image for pdf support in vim
     mermaid-cli # render mermaid diagrams in vim
-    # tectonic # latex reader in vim
     uv # python needed by MCPHub
     ast-grep # dependency for vim grug-far
     sqlite # for snacks.picker history
@@ -117,13 +108,9 @@
 
     # MISC
     gcalcli
-    # pueue for task.nu
-    pueue
+    pueue # for task.nu
     wgnord
     pass
-
-    # Hyde
-    # python313Packages.requests
 
   ];
 
