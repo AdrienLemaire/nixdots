@@ -1,0 +1,23 @@
+[user]
+	signingkey = 26E89F41067A5316
+	email = lemaire.adrien@gmail.com
+	name = Adrien Lemaire
+[commit]
+	gpgsign = true
+[init]
+	defaultBranch = main
+[pull]
+	ff = only
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+[diff]
+    tool = vimdiff
+[merge]
+    tool = vimdiff
+    conflictstyle = zdiff3
+[mergetool "vimdiff"]
+    cmd = nvim -d $LOCAL $BASE $REMOTE $MERGED \
+          -c '$wincmd w' -c 'wincmd J'

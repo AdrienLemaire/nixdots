@@ -1,0 +1,12 @@
+.direnv
+*.qcow2
+result
+.git-hooks
+*.swp
+*.swo
+history.txt
+history.sqlite3*
+old*
+*broken
+.aider*
+chroma*

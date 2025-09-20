@@ -1,0 +1,26 @@
+# Get editor completions based on the config schema
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# # A minimal left prompt
+# format = """$time$character"""
+# # move the rest of the prompt to the right
+# right_format = """$all"""
+
+[line_break]
+disabled = true
+
+
+[gcloud]
+disabled = true
+
+# Replace the '❯' symbol in the prompt with '➜'
+[character] # The name of the module we are configuring is 'character'
+disabled = true
+# using nushell $env.PROMPT_INDICATOR_VI_* instead
+
+[time]
+disabled = false
+format = '🕙[ $time ]($style)'
+time_format = '%T'
+# utc_time_offset = '-5'
+time_range = '07:00:00-19:00:00'
