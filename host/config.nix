@@ -3,22 +3,16 @@ let
   # Package declaration
   # ---------------------
 
-  pkgs = import inputs.hydenix.inputs.hydenix-nixpkgs {
-    inherit (inputs.hydenix.lib) system;
+  system = "x86_64-linux";
+  pkgs = import inputs.nixpkgs {
+    inherit system;
     config.allowUnfree = true;
     # Also make sure to enable cuda support in nixpkgs, otherwise transcription will
     # be painfully slow. But be prepared to let your computer build packages for 2-3 hours.
     config.cudaSupport = true;
 
     overlays = [
-      inputs.hydenix.lib.overlays
-      # Overlay to add userPkgs from unstable nixpkgs
-      (final: prev: {
-        userPkgs = import inputs.nixpkgs {
-          inherit (inputs.hydenix.lib) system;
-          config.allowUnfree = true;
-        };
-      })
+      inputs.hydenix.overlays.default
     ];
   };
 in {
@@ -27,9 +21,9 @@ in {
   nixpkgs.pkgs = pkgs;
 
   imports = [
-    inputs.hydenix.inputs.home-manager.nixosModules.home-manager
+    inputs.home-manager.nixosModules.home-manager
     ./hardware-configuration.nix
-    inputs.hydenix.lib.nixOsModules
+    inputs.hydenix.nixosModules.default
     ../modules/system
     ./environment.nix
     ./services.nix
@@ -39,10 +33,11 @@ in {
     ../modules/system/security.nix
 
     # Hardware configurations
-    inputs.hydenix.inputs.nixos-hardware.nixosModules.common-cpu-intel
-    inputs.hydenix.inputs.nixos-hardware.nixosModules.common-pc
-    inputs.hydenix.inputs.nixos-hardware.nixosModules.common-pc-ssd
-  ];
+    inputs.nixos-hardware.nixosModules.common-cpu-intel # Intel CPUs
+    inputs.nixos-hardware.nixosModules.common-hidpi # High-DPI displays
+    inputs.nixos-hardware.nixosModules.common-pc-laptop # Laptops
+    inputs.nixos-hardware.nixosModules.common-pc-ssd # SSD storage
+];
 
   home-manager = {
     useGlobalPkgs = true;
@@ -52,9 +47,8 @@ in {
     #! EDIT THIS USER (must match users defined below)
     users."dori" = { ... }: {
       imports = [
-        inputs.hydenix.lib.homeModules
+        inputs.hydenix.homeModules.default
         ../modules/hm
-        inputs.nix-index-database.homeModules.nix-index
       ];
     };
   };
@@ -79,10 +73,6 @@ in {
     hardware.enable = true; # enable hardware module
     network.enable = true; # enable network module
     nix.enable = true; # enable nix module
-    sddm = {
-      enable = true; # enable sddm module
-      theme = "Corners"; # "Candy" or "Corners"
-    };
     system.enable = true; # enable system module
 
   };

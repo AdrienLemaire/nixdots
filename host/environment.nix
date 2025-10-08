@@ -1,4 +1,4 @@
-{ inputs, pkgs, pkgs-unstable, lib, ... }:
+{ inputs, pkgs, lib, ... }:
 
 {
   environment.systemPackages = with pkgs; [
@@ -48,6 +48,7 @@
     zathura
     llpp
     gimp3-with-plugins
+    userPkgs.cxxopts  # trying to fix issue https://github.com/nixos/nixpkgs/issues/449068
 
     # TERMINALS
     ghostty
@@ -55,10 +56,9 @@
     # AI
     aider-chat
     goose-cli
-    userPkgs.claude-code
+    claude-code
     inputs.mcp-hub.packages.x86_64-linux.default
     n8n
-    userPkgs.gemini-cli
 
     # SHELLS
     nushell
