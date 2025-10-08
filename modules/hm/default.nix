@@ -166,9 +166,9 @@
     };
     social = {
       enable = true; # enable social module
-      discord.enable = false; # enable discord module
+      discord.enable = true; # enable discord module
       webcord.enable = false; # enable webcord module
-      vesktop.enable = true; # enable vesktop module
+      vesktop.enable = false; # enable vesktop module
     };
     spotify.enable = false;
     swww.enable = true; # enable swww wallpaper daemon

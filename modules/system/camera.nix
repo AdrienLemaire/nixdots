@@ -45,7 +45,8 @@ in {
 
   # https://discourse.nixos.org/t/i915-driver-has-bug-for-iris-xe-graphics/25006/10
   # resolved: i915 0000:00:02.0: [drm] Selective fetch area calculation failed in pipe A
-  boot.kernelParams = [ "i915.enable_psr=0" ];
+  # Enabled in hardware-configuration.nix
+  # boot.kernelParams = [ "i915.enable_psr=0" ];
 
   hardware.cpu.intel.updateMicrocode =
     lib.mkDefault config.hardware.enableRedistributableFirmware;

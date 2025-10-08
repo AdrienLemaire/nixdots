@@ -72,7 +72,7 @@ in {
       enable = true; # enable boot module
       useSystemdBoot = true; # disable for GRUB
       grubTheme = "Pochita"; # "Retroboot" or "Pochita"
-      grubExtraConfig = ""; # additional GRUB configuration
+      grubExtraConfig = "i915.enable_dc=0"; # additional GRUB configuration
       kernelPackages = pkgs.linuxPackages; # zen kernel breaks suspend
     };
     gaming.enable = true; # enable gaming module

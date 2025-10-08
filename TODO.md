@@ -12,7 +12,8 @@
   - Add back whisper packages to environment.nix
   - Re-enable realtime-stt-server service when working
 
-- [ ] **OpenAI Whisper** - Re-add `openai-whisper` package to environment.nix when performance is acceptable
+- [ ] **OpenAI Whisper** - Re-add `openai-whisper` package to environment.nix
+      when performance is acceptable
 
 ### Development Tools
 
@@ -36,6 +37,7 @@
   - Dell XPS 13 Plus specific webcam/audio fixes
   - IPU6 drivers configuration
   - Power management optimizations
+- [ ] confirm that kernelParams `i915.enable_dc=0` fixes firefox crashes
 
 ### Kernel Issues
 
