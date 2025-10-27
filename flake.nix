@@ -3,7 +3,8 @@
 
   inputs = {
     # Your nixpkgs
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    # nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/f47467040e656ee149396e335665214bc686e58a";
     nixpkgs-unstable = { url = "github:NixOS/nixpkgs/nixpkgs-unstable"; };
 
     # Hydenix

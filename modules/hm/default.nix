@@ -27,6 +27,7 @@
   };
 
   hydenix.hm = {
+    uwsm.enable = true;
     enable = true; # enable home-manager module
     comma.enable = true; # useful nix tool to run software without installing it first
     dolphin.enable = true; # file manager

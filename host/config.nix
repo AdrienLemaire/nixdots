@@ -35,7 +35,8 @@ in {
     # Hardware configurations
     inputs.nixos-hardware.nixosModules.common-cpu-intel # Intel CPUs
     inputs.nixos-hardware.nixosModules.common-hidpi # High-DPI displays
-    inputs.nixos-hardware.nixosModules.common-pc-laptop # Laptops
+    inputs.nixos-hardware.nixosModules.common-pc
+    # inputs.nixos-hardware.nixosModules.common-pc-laptop # Laptops
     inputs.nixos-hardware.nixosModules.common-pc-ssd # SSD storage
 ];
 
@@ -51,6 +52,11 @@ in {
         ../modules/hm
       ];
     };
+  };
+
+  boot = {
+      kernelParams = [ "i915.enable_psr=0" "i915.force_probe=4680" "dell_laptop.rfkill=0" ]; # "resume_offset=106506240" ];
+      kernelModules = [ "snd_soc_rt715_sdca" "snd_sof_pci_intel_tgl" "kvm-intel" "iwlwifi" ];
   };
 
   # IMPORTANT: Customize the following values to match your preferences
@@ -76,6 +82,15 @@ in {
     system.enable = true; # enable system module
 
   };
+
+  networking = {
+    networkmanager = {
+      enable = true;
+      wifi.powersave = false;
+    };
+    # wireless.enable = true;
+  };
+
 
   #! EDIT THESE VALUES (must match users defined above)
   users.users.dori = {
