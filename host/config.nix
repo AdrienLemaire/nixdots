@@ -9,11 +9,11 @@ let
     config.allowUnfree = true;
     # Also make sure to enable cuda support in nixpkgs, otherwise transcription will
     # be painfully slow. But be prepared to let your computer build packages for 2-3 hours.
-    config.cudaSupport = true;
+    # config.cudaSupport = true;
 
     overlays = [
       inputs.hydenix.overlays.default
-    ];
+     ];
   };
 in {
 
@@ -21,7 +21,7 @@ in {
   nixpkgs.pkgs = pkgs;
 
   imports = [
-    inputs.home-manager.nixosModules.home-manager
+    inputs.hydenix.inputs.home-manager.nixosModules.home-manager
     ./hardware-configuration.nix
     inputs.hydenix.nixosModules.default
     ../modules/system
@@ -83,6 +83,9 @@ in {
 
   };
 
+  # System Version - Don't change unless you know what you're doing (helps with system upgrades and compatibility)
+  system.stateVersion = "25.05";
+
   networking = {
     networkmanager = {
       enable = true;
@@ -101,7 +104,7 @@ in {
       "wheel" # For sudo access
       "networkmanager" # For network management
       "video" # For display/graphics access
-      "input" # for whisper-overlay to use evedev
+      # "input" # for whisper-overlay to use evedev
       # Add other groups as needed
     ];
     shell = pkgs.zsh; # pkgs.nushell

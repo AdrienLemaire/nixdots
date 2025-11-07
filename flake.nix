@@ -1,11 +1,11 @@
 {
   description = "template for hydenix";
 
-  inputs = {
+  inputs = rec {
     # Your nixpkgs
-    # nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs.url = "github:nixos/nixpkgs/f47467040e656ee149396e335665214bc686e58a";
-    nixpkgs-unstable = { url = "github:NixOS/nixpkgs/nixpkgs-unstable"; };
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # nixpkgs.url = "github:nixos/nixpkgs/f47467040e656ee149396e335665214bc686e58a";
+    # nixpkgs-unstable = { url = "github:NixOS/nixpkgs/nixpkgs-unstable"; };
 
     # Hydenix
     hydenix = {
@@ -17,14 +17,9 @@
       # uncomment the below if you know what you're doing, hydenix updates nixos-unstable every week or so
       # inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Home Manager
-    home-manager = {
-      url = "github:nix-community/home-manager";      
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
+    
     # Hardware Configuration's, used in ./configuration.nix. Feel free to remove if unused
-    nixos-hardware.url = "github:nixos/nixos-hardware/master";
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     mcp-hub.url = "github:ravitemer/mcp-hub";
     mcphub-nvim.url = "github:ravitemer/mcphub.nvim";
@@ -36,14 +31,15 @@
       HOSTNAME = "xps13-9320";
       system = "x86_64-linux";
 
-      pkgs-unstable = import inputs.nixpkgs-unstable {
-        inherit system;
-        config.allowUnfree = true;
-      };
+      # pkgs-unstable = import inputs.nixpkgs-unstable {
+      #   inherit system;
+      #   config.allowUnfree = true;
+      # };
 
       hydenixConfig = inputs.nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = { inherit inputs pkgs-unstable; };
+        specialArgs = { inherit inputs; };
+        # specialArgs = { inherit inputs pkgs-unstable; };
         modules = [ ./host/config.nix ];
       };
     in {

@@ -14,7 +14,6 @@
     fd
     lazygit
     tree-sitter
-    cargo
     unzip
     lynx
     sox
@@ -30,6 +29,8 @@
 
     # KEYBOARD LAYOUTS
     qwerty-fr
+    # remote-touchpad
+    # sunshine
 
     # KERNEL MODULES
     linuxKernel.packages.linux_zen.ipu6-drivers
@@ -46,8 +47,9 @@
     ffmpeg
     yt-dlp
     zathura
-    llpp
+    # llpp
     gimp3-with-plugins
+
 
     # TERMINALS
     ghostty
@@ -83,7 +85,7 @@
     sqlite # for snacks.picker history
     luarocks # Lua package manager
     rustc # Required for luarocks-build-rust-mlua
-    cargo # Required for building Rust-based Lua modules
+    cargo # Required for building Rust-based Lua modules  (and for glances)
 
     # FILE MANAGERS
     kdePackages.dolphin
