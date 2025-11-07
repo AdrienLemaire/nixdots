@@ -25,7 +25,6 @@
 
     # BROWSERS
     google-chrome
-    firefox
 
     # KEYBOARD LAYOUTS
     qwerty-fr
@@ -130,6 +129,7 @@
   xdg.mime = {
     enable = true;
     defaultApplications = {
+      "text/plain" = "nvim.desktop";
       "text/html" = "firefox.desktop";
       "x-scheme-handler/http" = "firefox.desktop";
       "x-scheme-handler/https" = "firefox.desktop";
