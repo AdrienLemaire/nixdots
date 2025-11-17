@@ -3,7 +3,7 @@
   programs.gnupg.agent = {
     enable = true;
     enableSSHSupport = true;
-    pinentryPackage = pkgs.pinentry-rofi;
+    pinentryPackage = pkgs.pinentry-curses;
     # These settings help with passphrase caching
     # in /etc/gnupg/gpg-agent.conf
     settings = {

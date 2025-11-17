@@ -75,7 +75,7 @@ in {
       grubExtraConfig = "i915.enable_dc=0"; # additional GRUB configuration
       kernelPackages = pkgs.linuxPackages; # zen kernel breaks suspend
     };
-    gaming.enable = true; # enable gaming module
+    gaming.enable = false; # enable gaming module
     hardware.enable = true; # enable hardware module
     network.enable = true; # enable network module
     nix.enable = true; # enable nix module

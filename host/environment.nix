@@ -90,20 +90,20 @@
     kdePackages.dolphin
 
     # GAMES
-    (lutris.override {
-      extraPkgs = pkgs: [
-        # C-Dogs
-        SDL2_mixer
-        flac
-        # bombsquad
-        python312
-      ];
-      extraLibraries = pkgs: [
-        "${python312}/lib"
-        "${flac}/lib"
-        "${SDL2_mixer}/lib"
-      ];
-    })
+    # (lutris.override {
+    #   extraPkgs = pkgs: [
+    #     # C-Dogs
+    #     SDL2_mixer
+    #     flac
+    #     # bombsquad
+    #     python312
+    #   ];
+    #   extraLibraries = pkgs: [
+    #     "${python312}/lib"
+    #     "${flac}/lib"
+    #     "${SDL2_mixer}/lib"
+    #   ];
+    # })
     bombsquad
 
     # MISC
