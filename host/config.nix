@@ -55,8 +55,18 @@ in {
   };
 
   boot = {
-      kernelParams = [ "i915.enable_psr=0" "i915.force_probe=4680" "dell_laptop.rfkill=0" ]; # "resume_offset=106506240" ];
-      kernelModules = [ "snd_soc_rt715_sdca" "snd_sof_pci_intel_tgl" "kvm-intel" "iwlwifi" ];
+    kernelParams = [ "i915.enable_psr=0" "i915.force_probe=4680" "dell_laptop.rfkill=0" ]; # "resume_offset=106506240" ];
+    kernelModules = [ "snd_soc_rt715_sdca" "snd_sof_pci_intel_tgl" "kvm-intel" "iwlwifi" ];
+    loader.systemd-boot.configurationLimit = 5;
+  };
+
+  nix = {
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 7d";
+    };
+    settings.auto-optimise-store = true;
   };
 
   # IMPORTANT: Customize the following values to match your preferences
@@ -78,7 +88,7 @@ in {
     gaming.enable = false; # enable gaming module
     hardware.enable = true; # enable hardware module
     network.enable = true; # enable network module
-    nix.enable = true; # enable nix module
+    nix.enable = true;
     system.enable = true; # enable system module
 
   };
