@@ -1,30 +1,11 @@
-{ inputs,  ... }:
-let
-  # Package declaration
-  # ---------------------
-
-  system = "x86_64-linux";
-  pkgs = import inputs.nixpkgs {
-    inherit system;
-    config.allowUnfree = true;
-    # Also make sure to enable cuda support in nixpkgs, otherwise transcription will
-    # be painfully slow. But be prepared to let your computer build packages for 2-3 hours.
-    # config.cudaSupport = true;
-
-    overlays = [
-      inputs.hydenix.overlays.default
-     ];
-  };
-in {
-
-  # Set pkgs for hydenix globally, any file that imports pkgs will use this
-  nixpkgs.pkgs = pkgs;
-
+{ inputs, pkgs, ... }:
+{
   imports = [
     inputs.hydenix.inputs.home-manager.nixosModules.home-manager
-    ./hardware-configuration.nix
     inputs.hydenix.nixosModules.default
     ../modules/system
+    ./hardware-configuration.nix
+
     ./environment.nix
     ./services.nix
     ./systemd.nix
@@ -93,9 +74,6 @@ in {
 
   };
 
-  # System Version - Don't change unless you know what you're doing (helps with system upgrades and compatibility)
-  system.stateVersion = "25.05";
-
   networking = {
     networkmanager = {
       enable = true;
@@ -120,5 +98,8 @@ in {
     shell = pkgs.zsh; # pkgs.nushell
     homeMode = "701";
   };
+
+  # System Version - Don't change unless you know what you're doing (helps with system upgrades and compatibility)
+  system.stateVersion = "25.05";
 }
 

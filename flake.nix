@@ -1,25 +1,13 @@
 {
   description = "template for hydenix";
 
-  inputs = rec {
-    # Your nixpkgs
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    # nixpkgs.url = "github:nixos/nixpkgs/f47467040e656ee149396e335665214bc686e58a";
-    # nixpkgs-unstable = { url = "github:NixOS/nixpkgs/nixpkgs-unstable"; };
-
-    # Hydenix
-    hydenix = {
-      # Available inputs:
-      # Main: github:richen604/hydenix
-      # Commit: github:richen604/hydenix/<commit-hash>
-      # Version: github:richen604/hydenix/v1.0.0
-      url = "github:richen604/hydenix";
-      # uncomment the below if you know what you're doing, hydenix updates nixos-unstable every week or so
-      # inputs.nixpkgs.follows = "nixpkgs";
+  inputs = {
+    nixpkgs = {
+      # url = "github:nixos/nixpkgs/nixos-unstable"; # uncomment this if you know what you're doing
+      follows = "hydenix/nixpkgs"; # then comment this
     };
-    
-    # Hardware Configuration's, used in ./configuration.nix. Feel free to remove if unused
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    hydenix.url = "github:richen604/hydenix";
+    nixos-hardware.url = "github:nixos/nixos-hardware/master";
 
     mcp-hub.url = "github:ravitemer/mcp-hub";
     mcphub-nvim.url = "github:ravitemer/mcphub.nvim";

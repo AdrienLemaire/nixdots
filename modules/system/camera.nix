@@ -34,6 +34,11 @@ in {
     [
       # https://discourse.nixos.org/t/v4l2loopback-cannot-find-module/26301/5
       v4l-utils
+      ipu6-camera-bins
+      ipu6-camera-hal
+      gst_all_1.icamerasrc-ipu6ep  # Correct plugin for ipu6ep platform
+      gst_all_1.gstreamer          # Base GStreamer
+      gst_all_1.gst-plugins-base   # videoconvert, autovideosink
     ];
 
   boot.initrd.availableKernelModules =
@@ -83,6 +88,12 @@ in {
     LABEL="hide_cam_end"
   '';
 
-  # environment.etc.camera.source = "${ipu6-camera-hal}/share/defaults/etc/camera";
+  # Force the proprietary Intel libs into the HAL plugin search path
+  environment.variables = {
+    LD_LIBRARY_PATH = "${pkgs.ipu6-camera-bins}/lib:${pkgs.ipu6-camera-bins}/lib/ias";
+  };
+
+  # Symlink HAL config for sensor detection (essential for ov01a10)
+  environment.etc."camera".source = "${pkgs.ipu6-camera-hal}/share/defaults/etc/camera";
 
 }

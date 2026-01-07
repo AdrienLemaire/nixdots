@@ -26,6 +26,9 @@
     # BROWSERS
     google-chrome
 
+    # STUDY TOOLS
+    anki
+
     # KEYBOARD LAYOUTS
     qwerty-fr
     # remote-touchpad
@@ -67,7 +70,7 @@
     # COMPLETION TOOLS
     zoxide
     carapace
-    inshellisense
+    # inshellisense
 
     # DEVELOPMENT TOOLS
     nodejs_24
