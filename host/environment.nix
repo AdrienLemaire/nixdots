@@ -39,13 +39,14 @@
 
     # SCREEN RECORDING
     wf-recorder
-    grim
-    satty
-    obs-studio
+    grim  # crop screen
+    satty  # screenshot tool
+    obs-studio  # video recorder
     kdePackages.kdenlive
+    gifski
 
     # MEDIA TOOLS
-    mplayer
+    mplayer # mpv has rendering issues
     ffmpeg
     yt-dlp
     zathura
