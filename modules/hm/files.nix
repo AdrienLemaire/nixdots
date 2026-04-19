@@ -96,6 +96,18 @@
       force = true;
       mutable = true;
     };
+    ".local/share/bin/gif-frame.sh" = {
+      source = ./scripts/gif-frame.sh;
+      force = true;
+      mutable = true;
+    };
+    ".local/share/bin/gif-build.sh" = {
+      source = ./scripts/gif-build.sh;
+      force = true;
+      mutable = true;
+    };
+
+
 
     ".gitconfig" = {
       source = ./home/gitconfig;

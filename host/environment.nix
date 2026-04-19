@@ -25,6 +25,7 @@
 
     # BROWSERS
     google-chrome
+    offpunk
 
     # STUDY TOOLS
     anki
