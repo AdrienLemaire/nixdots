@@ -2,11 +2,18 @@
   description = "template for hydenix";
 
   inputs = {
-    nixpkgs = {
-      # url = "github:nixos/nixpkgs/nixos-unstable"; # uncomment this if you know what you're doing
-      follows = "hydenix/nixpkgs"; # then comment this
+    # Direct nixpkgs input (nixos-unstable)
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    # Direct home-manager input (follows our nixpkgs)
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Hydenix (keeping during migration, will be removed in Phase 8)
     hydenix.url = "github:richen604/hydenix";
+
     nixos-hardware.url = "github:nixos/nixos-hardware/master";
 
     mcp-hub.url = "github:ravitemer/mcp-hub";
