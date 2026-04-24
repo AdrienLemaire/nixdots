@@ -27,12 +27,18 @@
       force = true;
       mutable = true;
     };
-    # ".config/hypr/windowrules.conf" = lib.mkForce {
+    ".config/hypr/windowrules.conf" = lib.mkForce {
+    #".local/share/hypr/windowrules.conf" = lib.mkForce {
+      source = ./home/hypr/windowrules.conf;
+      force = true;
+      mutable = true;
+    };
     ".local/share/hypr/windowrules.conf" = lib.mkForce {
       source = ./home/hypr/windowrules.conf;
       force = true;
       mutable = true;
     };
+
 
     # ".config/hypr/userprefs.conf" = lib.mkForce {
     #   source = ./home/hypr/userprefs.conf;
