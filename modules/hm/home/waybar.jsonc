@@ -55,8 +55,22 @@
       "power-profiles-daemon",
       "custom/gpuinfo",
       "custom/cpuinfo",
+      "memory",
       "custom/sensorsinfo"
     ]
+  },
+  "memory": {
+    "interval": 5,
+    "format": "  {percentage}% ({used:0.1f}G)",
+    "format-warning": "  {percentage}% ({used:0.1f}G)",
+    "format-critical": "  {percentage}% ({used:0.1f}G)",
+    "states": {
+      "warning": 75,
+      "critical": 88
+    },
+    "tooltip": true,
+    "tooltip-format": "RAM: {used:0.1f}G / {total:0.1f}G ({percentage}%)\nSwap: {swapUsed:0.1f}G / {swapTotal:0.1f}G ({swapPercentage}%)\nClick to inspect / pause / kill processes",
+    "on-click": "~/.local/share/bin/mem-inspector.sh"
   },
   "group/leaf#2": {
     "orientation": "inherit",

@@ -116,13 +116,19 @@
       # Keybindings configurations
       keybindings = {
         enable = true; # enable keybindings configurations
-        extraConfig = ""; # additional keybindings configuration
+        extraConfig = ''
+          bind = SUPER, escape, exec, ~/.local/share/bin/mem-inspector.sh
+        '';
         overrideConfig = null; # complete keybindings configuration override (null or lib.types.lines)
       };
       # Window rules configurations
       windowrules = {
         enable = true; # enable window rules configurations
-        extraConfig = ""; # additional window rules configuration
+        extraConfig = ''
+          windowrulev2 = float, class:^(mem-inspector)$
+          windowrulev2 = center, class:^(mem-inspector)$
+          windowrulev2 = size 1400 800, class:^(mem-inspector)$
+        '';
         overrideConfig = null; # complete window rules configuration override (null or lib.types.lines)
       };
       # NVIDIA configurations

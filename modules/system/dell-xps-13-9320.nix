@@ -38,10 +38,17 @@ in
   '';
 
   # IPU6 Webcam (9320-specific; use libcamera for apps like Cheese/Zoom)
-  hardware.ipu6.enable = true;
-  hardware.ipu6.platform = "ipu6ep";
-  hardware.enableRedistributableFirmware = true;
-  hardware.firmware = [ ivsc-firmware ];
+  hardware.ipu6 = {
+    enable = true;
+    platform = "ipu6ep";
+    enableRedistributableFirmware = true;
+    firmware = [ ivsc-firmware ];
+  };
+  environment.systemPackages = with pkgs; [
+    libcamera
+    gst_all_1.icamerasrc-ipu6ep
+  ];
+
 
   # Audio: PipeWire with init fix
   sound.enable = true;

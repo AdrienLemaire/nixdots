@@ -112,6 +112,12 @@
       force = true;
       mutable = true;
     };
+    ".local/share/bin/mem-inspector.sh" = {
+      source = ./scripts/mem-inspector.sh;
+      force = true;
+      mutable = true;
+      executable = true;
+    };
 
 
 
