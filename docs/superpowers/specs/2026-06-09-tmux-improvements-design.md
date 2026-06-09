@@ -73,7 +73,8 @@ module (1 file = 1 concern), imported from `modules/hm/default.nix`. Contents:
 - **Prefix:** keep `C-b` (unchanged, per user choice).
 - **Plugins** (`programs.tmux.plugins`, all confirmed present in nixpkgs
   `tmuxPlugins`):
-  - `tmux-which-key` — shortcut hint popup (bound to `prefix` + `Space`).
+  - `tmux-which-key` — shortcut hint menu, triggered by `prefix` + `Space`
+    (explicit trigger only; see "which-key reality" below).
   - `vim-tmux-navigator` — seamless `C-h/j/k/l` between nvim splits and panes.
   - `resurrect` — save/restore session layout + cwd.
   - `continuum` — **save-only** (15-min snapshots); auto-restore **disabled** to
@@ -115,6 +116,29 @@ into the running `main` server. **This live-reload is the critical path** — th
 Verified: `tmux source-file` against the live `/tmp/tmux-1000/default` socket
 round-trips correctly; `TMUX_TMPDIR` is unset so themeswitch's `bash -c` targets
 the same default socket.
+
+## which-key reality (vs which-key.nvim)
+
+tmux has **no "pause-then-reveal" primitive** — there is no timeout-triggered
+popup. So the LazyVim experience (menu auto-appears after the leader, as
+mappings become available) is **not achievable** in tmux. `tmux-which-key`
+(explicitly modeled on which-key.nvim/emacs-which-key) instead opens its menu on
+an **explicit trigger key**.
+
+Decision: trigger via **`prefix` + `Space` only** (the plugin's `prefix_table`).
+No no-prefix `root_table` chord — the default `C-Space` would collide with
+fcitx5, and the user opted for the zero-conflict two-step trigger.
+
+### NixOS / declarative build requirement
+
+`tmux-which-key`'s init script copies its example config into the plugin's own
+directory and runs `build.py` there. On NixOS that directory is the **read-only
+nix store**, so the default autobuild fails. The plugin supports immutable OSes
+via XDG mode: set `@tmux-which-key-xdg-enable 1`, which relocates config to
+`$XDG_CONFIG_HOME/tmux/plugins/tmux-which-key/config.yaml` and the built
+`init.tmux` to `$XDG_DATA_HOME/...` (both writable). The bundled `build.py` runs
+under a wrapped python3 provided by the nixpkgs plugin, so the menu rebuilds on
+first switch. Plan must set this option **before** the plugin loads.
 
 ## Files touched
 
