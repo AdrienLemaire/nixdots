@@ -22,6 +22,12 @@
       mutable = true;
     };
 
+    ".config/hyde/wallbash/always/tmux.dcol" = {
+      source = ./home/wallbash/tmux.dcol;
+      force = true;
+      mutable = true;
+    };
+
     ".config/hypr/keybindings.conf" = lib.mkForce {
       source = ./home/hypr/keybindings.conf;
       force = true;
