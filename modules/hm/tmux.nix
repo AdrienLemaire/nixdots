@@ -51,6 +51,10 @@
     ];
 
     extraConfig = ''
+      # Renumber windows sequentially when one is closed (base-index/pane-base-index
+      # come from baseIndex above).
+      set -g renumber-windows on
+
       # Keep CWD when splitting/creating windows
       bind '"' split-window -v -c "#{pane_current_path}"
       bind '%' split-window -h -c "#{pane_current_path}"
@@ -78,6 +82,7 @@
           set -g pane-border-style "fg=#313244" ; \
           set -g pane-active-border-style "fg=#cba6f7" ; \
           set -g message-style "bg=#cba6f7,fg=#1e1e2e" ; \
+          set -g message-command-style "bg=#cba6f7,fg=#1e1e2e" ; \
           set -g mode-style "bg=#cba6f7,fg=#1e1e2e" \
         '
     '';
