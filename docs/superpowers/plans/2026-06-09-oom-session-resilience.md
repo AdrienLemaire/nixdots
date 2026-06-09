@@ -33,6 +33,12 @@ First Stage-A attempt used a `systemd.user.services.claude-tmux` server pinned t
 
 **Revised Task 3 (shipped):** dropped the service AND the dedicated `claude.slice`. `cz` now starts a plain tmux server from the interactive login shell (`tmux new-session -A -s main`), so it inherits the full environment; containment comes from the `app.slice` soft cap; persistence from tmux daemonization + existing linger. Simpler, no env bug — matches the sysadmin reviewer's minimal-viable recommendation. The cross-logout survival test remains the acceptance gate.
 
+## Stage B (UWSM switch) — investigated, deliberately SKIPPED (2026-06-09)
+
+Root cause of UWSM being inert: Hydenix hardcodes `services.displayManager.sddm.settings.General.DefaultSession = "hyprland.desktop"` (`hydenix/modules/system/sddm.nix`); `hydenix.hm.uwsm.enable` only drops `~/.config/uwsm/` env files, it never selects the uwsm session. The switch would be `lib.mkForce "hyprland-uwsm.desktop"` on that attribute.
+
+Decision: **not done.** Stage A already removed the kill path that caused the logout, and the agents are already in `app.slice` (ghostty self-places, independent of UWSM). Stage B's only incremental gain is containing **firefox**, and even the session switch wouldn't deliver it — the unwrapped `exec-once = ... firefox` inherits the compositor's cgroup; realizing the cap requires `exec-once = ... uwsm app -- firefox`. Marginal benefit + relogin/session-launch risk → skipped. Revisit only if firefox memory becomes a concrete problem. Acceptance gate if ever resumed: `cat /proc/$(pgrep -x firefox|head -1)/cgroup` must show `app.slice`.
+
 ## Incident Recap (root cause — already established)
 
 ```
