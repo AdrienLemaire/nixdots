@@ -82,6 +82,20 @@
     # wireless.enable = true;
   };
 
+  # K380s BLE keyboard hits HCI Reason 0x08 Connection Timeout every ~30 min
+  # because the negotiated supervision timeout sits at 2.1 s and the host's BLE
+  # link scheduler occasionally stalls longer than that on idle peripherals.
+  # The kernel debugfs default is bypassed by LE Extended Create Connection;
+  # bluez reads these values directly when issuing the command. Units:
+  # MinConnectionInterval / MaxConnectionInterval are in 1.25 ms; ConnectionLatency is a
+  # count of intervals the peripheral may skip; ConnectionSupervisionTimeout is in 10 ms.
+  hardware.bluetooth.settings.LE = {
+    MinConnectionInterval = 24;          # 30 ms
+    MaxConnectionInterval = 40;          # 50 ms
+    ConnectionLatency = 0;
+    ConnectionSupervisionTimeout = 600;  # 6000 ms (was negotiated at 2100 ms)
+  };
+
 
   #! EDIT THESE VALUES (must match users defined above)
   users.users.dori = {

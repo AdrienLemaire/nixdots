@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "nixos": {
+      "type": "stdio",
+      "command": "nix",
+      "args": [
+        "run",
+        "github:utensils/mcp-nixos",
+        "--"
+      ],
+      "env": {}
+    },
+    "home-assistant": {
+      "type": "http",
+      "url": "http://192.168.1.53:8123/api/mcp"
+    }
+  }
+}
