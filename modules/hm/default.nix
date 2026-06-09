@@ -26,6 +26,18 @@
     enableNushellIntegration = true;
   };
 
+  # Persistent multiplexer for Claude agent sessions (see modules/system/memory.nix).
+  # secureSocket=false puts the socket in /tmp so the server outlives the /run/user
+  # lifetime; with linger enabled the `cz` session survives a forced logout.
+  programs.tmux = {
+    enable = true;
+    secureSocket = false;
+    terminal = "tmux-256color";
+    escapeTime = 10;
+    historyLimit = 50000;
+    mouse = true;
+  };
+
   hydenix.hm = {
     uwsm.enable = true;
     enable = true; # enable home-manager module
