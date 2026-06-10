@@ -5,6 +5,7 @@ source <(carapace _carapace)
 eval "$(zoxide init zsh)"
 alias vi=nvim
 alias vim=nvim
+alias claude2='CLAUDE_CONFIG_DIR=~/.claude-account2 claude'
 
 # Attach to (or create) the persistent agent tmux session. Started from this real
 # login shell, so it inherits the full PATH/env; it lives under app.slice (soft
