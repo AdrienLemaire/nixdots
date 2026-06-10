@@ -55,6 +55,13 @@
       # come from baseIndex above).
       set -g renumber-windows on
 
+      # Claude Code sets the terminal title to its current task; tmux stores it as
+      # the pane title (#T). Forward it to the outer terminal tab, and show it in
+      # the window list for windows tagged by the claude/claude2 zsh wrappers
+      # (@claude_acct carries a colored per-account marker).
+      set -g set-titles on
+      set -g set-titles-string "#S:#I #T"
+
       # Keep CWD when splitting/creating windows
       bind '"' split-window -v -c "#{pane_current_path}"
       bind '%' split-window -h -c "#{pane_current_path}"
@@ -74,8 +81,8 @@
           set -g status-style "bg=#1e1e2e,fg=#cdd6f4" ; \
           set -g status-left-length 40 ; \
           set -g status-left "#[fg=#1e1e2e,bg=#cba6f7,bold] #S #[default] " ; \
-          set -g window-status-format " #I #W " ; \
-          set -g window-status-current-format "#[fg=#1e1e2e,bg=#cba6f7,bold] #I #W #[default]" ; \
+          set -g window-status-format " #I #{?#{@claude_acct},#{?#{==:#{@claude_acct},A},#[fg=green],#[fg=magenta]}#{@claude_acct}#[default] #{?#{pane_title},#{=20:pane_title},#W},#W} " ; \
+          set -g window-status-current-format "#[fg=#1e1e2e,bg=#cba6f7,bold] #I #{?#{@claude_acct},#{@claude_acct} #{?#{pane_title},#{=20:pane_title},#W},#W} #[default]" ; \
           set -g window-status-separator "" ; \
           set -g status-right-length 60 ; \
           set -g status-right "#[fg=#b4befe] %Y-%m-%d #[fg=#1e1e2e,bg=#cba6f7,bold] %H:%M " ; \

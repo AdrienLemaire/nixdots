@@ -1,3 +1,7 @@
+# Report CWD to tmux (and terminal) via OSC 7 so #{pane_current_path} tracks navigation
+function _report_cwd() { printf '\033]7;file://%s%s\000' "$HOST" "$PWD"; }
+precmd_functions+=(_report_cwd)
+
 export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense' # optional
 zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 source <(carapace _carapace)
@@ -5,7 +9,25 @@ source <(carapace _carapace)
 eval "$(zoxide init zsh)"
 alias vi=nvim
 alias vim=nvim
-alias claude2='CLAUDE_CONFIG_DIR=~/.claude-account2 claude'
+# Claude account wrappers: tag the tmux window with an account marker
+# (A = adrien/default account, F = founders/account2) so the window list shows
+# which account each session runs, alongside Claude's live task title
+# (pane_title — see window-status-format in tmux.nix and wallbash/tmux.dcol,
+# which also color the marker green/magenta on non-highlighted windows).
+claude() {
+  [ -n "$TMUX" ] && tmux set -w @claude_acct 'A'
+  command claude "$@"
+  local ret=$?
+  [ -n "$TMUX" ] && tmux set -wu @claude_acct
+  return $ret
+}
+claude2() {
+  [ -n "$TMUX" ] && tmux set -w @claude_acct 'F'
+  CLAUDE_CONFIG_DIR=~/.claude-account2 command claude "$@"
+  local ret=$?
+  [ -n "$TMUX" ] && tmux set -wu @claude_acct
+  return $ret
+}
 
 # Attach to (or create) the persistent agent tmux session. Started from this real
 # login shell, so it inherits the full PATH/env; it lives under app.slice (soft

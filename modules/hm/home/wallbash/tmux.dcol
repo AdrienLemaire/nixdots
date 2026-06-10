@@ -9,8 +9,10 @@ set -g status-style "bg=#<wallbash_pry1>,fg=#<wallbash_txt1>"
 set -g status-left-length 40
 set -g status-left "#[fg=#<wallbash_pry1>,bg=#<wallbash_1xa6>,bold] #S #[default] "
 
-set -g window-status-format " #I #W "
-set -g window-status-current-format "#[fg=#<wallbash_pry1>,bg=#<wallbash_1xa6>,bold] #I #W #[default]"
+# Windows tagged by the claude/claude2 zsh wrappers (@claude_acct = colored
+# account marker) show the marker + Claude's live task title (pane title #T).
+set -g window-status-format " #I #{?#{@claude_acct},#{?#{==:#{@claude_acct},A},#[fg=green],#[fg=magenta]}#{@claude_acct}#[default] #{?#{pane_title},#{=20:pane_title},#W},#W} "
+set -g window-status-current-format "#[fg=#<wallbash_pry1>,bg=#<wallbash_1xa6>,bold] #I #{?#{@claude_acct},#{@claude_acct} #{?#{pane_title},#{=20:pane_title},#W},#W} #[default]"
 set -g window-status-separator ""
 
 set -g status-right-length 60

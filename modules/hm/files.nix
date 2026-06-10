@@ -124,6 +124,12 @@
       mutable = true;
       executable = true;
     };
+    ".local/share/bin/claude-statusline.sh" = {
+      source = ./scripts/claude-statusline.sh;
+      force = true;
+      mutable = true;
+      executable = true;
+    };
 
 
 
