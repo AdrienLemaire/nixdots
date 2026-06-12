@@ -29,9 +29,13 @@ claude2() {
   return $ret
 }
 
-# Attach to (or create) the persistent agent tmux session. Started from this real
-# login shell, so it inherits the full PATH/env; it lives under app.slice (soft
-# memory cap) and, with linger enabled, survives a forced logout / compositor crash —
-# reattach with `cz` after re-login.
-cz() { tmux new-session -A -s main; }
+# Attach to (or create) the persistent agent tmux session. The server runs as
+# the tmux-main user service in agents.slice (modules/system/memory.nix), out
+# of reach of ghostty/compositor scope deaths — reattach with `cz` after any
+# crash or re-login. If the service is unavailable, -A falls back to creating
+# the session in-place (old behavior).
+cz() {
+  systemctl --user start tmux-main 2>/dev/null
+  tmux new-session -A -s main
+}
 
