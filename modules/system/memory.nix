@@ -102,7 +102,7 @@
     wantedBy = [ "default.target" ];
     serviceConfig = {
       Type = "forking";
-      ExecStart = "${pkgs.zsh}/bin/zsh -lc 'exec tmux new-session -d -s main'";
+      ExecStart = "${pkgs.zsh}/bin/zsh -lc 'tmux has-session -t main 2>/dev/null || exec tmux new-session -d -s main'";
       Restart = "on-failure";
       RestartSec = 2;
       Slice = "agents.slice";
