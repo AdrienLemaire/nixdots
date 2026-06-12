@@ -36,6 +36,9 @@
       }
       {
         plugin = continuum;
+        # On a fresh server start, resurrect's restore may collide with the service's
+        # pre-created blank 'main' session (duplicate or layout overlay, depending on
+        # resurrect version). Bounded nuisance: kill the blank one if it appears.
         extraConfig = ''
           set -g @continuum-save-interval '15'
           set -g @continuum-restore 'on'
@@ -106,6 +109,10 @@
   # to transient units and are parsed after the transient fragment, so this
   # override wins. linux-cgroup=always itself stays: per-surface isolation is
   # useful once tmux is out of the blast radius.
+  # Note: 'auto' is safe here only because enableUserSlices=false in
+  # modules/system/memory.nix prevents any ancestor slice from opting into
+  # ManagedOOMMemoryPressure=kill. If that ever changes, switch this to
+  # ManagedOOMMemoryPressureLimit=100% instead.
   xdg.configFile."systemd/user/app-ghostty-surface-transient-.scope.d/50-no-oomd-kill.conf".text = ''
     [Scope]
     ManagedOOMMemoryPressure=auto
