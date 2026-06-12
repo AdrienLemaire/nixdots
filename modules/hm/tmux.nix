@@ -6,9 +6,12 @@
     pkgs.wl-clipboard # wl-copy/wl-paste for yank on Wayland
   ];
 
-  # Persistent multiplexer for Claude agent sessions (see modules/system/memory.nix).
-  # secureSocket=false puts the socket in /tmp so the server outlives the /run/user
-  # lifetime; with linger enabled the `cz` session survives a forced logout.
+  # Persistent multiplexer for Claude agent sessions. The server runs as the
+  # tmux-main user service in agents.slice (modules/system/memory.nix) so no
+  # ghostty/compositor scope death can reach it; the drop-ins below neutralize
+  # ghostty's hardcoded oomd kill property and harden the per-pane scopes.
+  # secureSocket=false puts the socket in /tmp so the server outlives the
+  # /run/user lifetime; with linger enabled it survives a forced logout.
   programs.tmux = {
     enable = true;
     secureSocket = false;
@@ -35,7 +38,7 @@
         plugin = continuum;
         extraConfig = ''
           set -g @continuum-save-interval '15'
-          set -g @continuum-restore 'off'
+          set -g @continuum-restore 'on'
         '';
       }
       {
@@ -94,4 +97,28 @@
         '
     '';
   };
+
+  # ghostty (linux-cgroup=always) hardcodes ManagedOOMMemoryPressure=kill on
+  # every app-ghostty-surface-transient-*.scope (src/apprt/gtk/cgroup.zig; no
+  # config option). Under global thrash, oomd then kills inside the surface
+  # scope and systemd tears the whole cgroup down — this is what used to take
+  # the tmux server (and every claude session) with it. Prefix drop-ins apply
+  # to transient units and are parsed after the transient fragment, so this
+  # override wins. linux-cgroup=always itself stays: per-surface isolation is
+  # useful once tmux is out of the blast radius.
+  xdg.configFile."systemd/user/app-ghostty-surface-transient-.scope.d/50-no-oomd-kill.conf".text = ''
+    [Scope]
+    ManagedOOMMemoryPressure=auto
+  '';
+
+  # Per-pane hardening for tmux's native tmux-spawn-<uuid>.scope units (panes
+  # inherit the server's slice = agents.slice). OOMPolicy=continue: a
+  # kernel-OOM kill of one child must not fail the scope (pane scopes set
+  # SendSIGHUP=yes — a scope stop would HUP the whole pane). MemoryHigh
+  # reclaim-throttles a single runaway claude pane before it starves siblings.
+  xdg.configFile."systemd/user/tmux-spawn-.scope.d/50-agents.conf".text = ''
+    [Scope]
+    OOMPolicy=continue
+    MemoryHigh=12G
+  '';
 }
