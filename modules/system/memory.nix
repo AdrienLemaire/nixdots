@@ -91,6 +91,10 @@
   systemd.user.slices."agents".sliceConfig.MemoryHigh = "22G";
   systemd.user.slices."app".sliceConfig.MemoryHigh = "20G";
 
+  # Boot-start and logout-survival of the user manager (and thus tmux-main)
+  # require linger; declare it instead of relying on a past loginctl call.
+  users.users.dori.linger = true;
+
   # The tmux server gets its own service so no terminal/compositor scope
   # death can reach it. `zsh -lc` provides the full NixOS PATH (the old
   # objection to a service-launched tmux); pane shells are interactive zsh
@@ -102,16 +106,15 @@
     wantedBy = [ "default.target" ];
     serviceConfig = {
       Type = "forking";
-      ExecStart = "${pkgs.zsh}/bin/zsh -lc 'tmux has-session -t main 2>/dev/null || exec tmux new-session -d -s main'";
+      ExecStart = "${pkgs.zsh}/bin/zsh -lc 'exec tmux new-session -d -s main'";
       Restart = "on-failure";
       RestartSec = 2;
+      # If a start races an already-running server (e.g. a session created via
+      # cz's fallback path), the tmux client exits 1 ("duplicate session");
+      # that's not a failure worth a restart loop — the server is up. Real
+      # server deaths exit via signal/other codes and still restart.
+      RestartPreventExitStatus = "1";
       Slice = "agents.slice";
-      # Rare edge: if a main session already exists while this unit is
-      # inactive (server created via cz's fallback path), the has-session
-      # guard exits without forking and Type=forking may record a protocol
-      # failure with a short restart burst. Benign and rate-limited; cz still
-      # attaches. Accepted over Type=oneshot, which would lose
-      # Restart=on-failure tracking of real server deaths.
       # A kernel-OOM kill of one child (an MCP server, a build) must not
       # stop the whole unit.
       OOMPolicy = "continue";
