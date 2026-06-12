@@ -130,8 +130,12 @@
       mutable = true;
       executable = true;
     };
-
-
+    ".claude/hooks/memgate.sh" = {
+      source = ./scripts/memgate.sh;
+      force = true;
+      mutable = true;
+      executable = true;
+    };
 
     ".gitconfig" = {
       source = ./home/gitconfig;
