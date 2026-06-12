@@ -106,6 +106,12 @@
       Restart = "on-failure";
       RestartSec = 2;
       Slice = "agents.slice";
+      # Rare edge: if a main session already exists while this unit is
+      # inactive (server created via cz's fallback path), the has-session
+      # guard exits without forking and Type=forking may record a protocol
+      # failure with a short restart burst. Benign and rate-limited; cz still
+      # attaches. Accepted over Type=oneshot, which would lose
+      # Restart=on-failure tracking of real server deaths.
       # A kernel-OOM kill of one child (an MCP server, a build) must not
       # stop the whole unit.
       OOMPolicy = "continue";
