@@ -96,17 +96,21 @@
   users.users.dori.linger = true;
 
   # The tmux server gets its own service so no terminal/compositor scope
-  # death can reach it. `zsh -lc` provides the full NixOS PATH (the old
-  # objection to a service-launched tmux); pane shells are interactive zsh
-  # and rebuild their own env anyway. NixOS-side user units are not restarted
-  # by nixos-rebuild, so rebuilds cannot kill the server. With linger enabled
-  # the service also starts at boot and survives logout.
+  # death can reach it. PATH trap: the unit's default Environment=PATH is
+  # minimal, and a plain `zsh -lc` does NOT fix it because NixOS guards
+  # /etc/set-environment behind __NIXOS_SET_ENVIRONMENT_DONE, which leaks =1
+  # from the user manager environment — so the guard must be unset and
+  # set-environment re-sourced explicitly. That also gives the server (and
+  # thus every pane) the full session env incl. sessionVariables paths.
+  # NixOS-side user units are not restarted by nixos-rebuild, so rebuilds
+  # cannot kill the server. With linger enabled the service also starts at
+  # boot and survives logout.
   systemd.user.services.tmux-main = {
     description = "tmux server for agent sessions";
     wantedBy = [ "default.target" ];
     serviceConfig = {
       Type = "forking";
-      ExecStart = "${pkgs.zsh}/bin/zsh -lc 'exec tmux new-session -d -s main'";
+      ExecStart = "${pkgs.zsh}/bin/zsh -c 'unset __NIXOS_SET_ENVIRONMENT_DONE; source /etc/set-environment; exec tmux new-session -d -s main'";
       Restart = "on-failure";
       RestartSec = 2;
       # If a start races an already-running server (e.g. a session created via
