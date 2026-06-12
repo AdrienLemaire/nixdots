@@ -240,3 +240,9 @@ disappear once Phases 1+3 keep MemAvailable above the floor.
   user decision. Note: firefox still shares Hyprland's cgroup; a compositor
   kill triggered through that shared scope remains possible, accepted risk.
 - nohang as earlyoom replacement — revisit only if freezes persist.
+
+## Status
+
+Implemented 2026-06-12 (see docs/superpowers/plans/2026-06-12-claude-session-stability.md).
+Tuning expected: memgate thresholds (MEMGATE_*), earlyoom thresholds, MGLRU
+min_ttl_ms (lower to 500 if kills feel eager) — revisit after a week of real load.
