@@ -22,7 +22,12 @@ fi
 healthy() {
   local avail psi
   avail=$(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo)
-  psi=$(awk '/^full/{sub("avg10=","",$2); print int($2)}' /proc/pressure/memory)
+  # No PSI (containers, CONFIG_PSI off): fail open rather than block forever.
+  if [ -r /proc/pressure/memory ]; then
+    psi=$(awk '/^full/{sub("avg10=","",$2); print int($2)}' /proc/pressure/memory)
+  else
+    psi=0
+  fi
   [ "$avail" -ge "$MIN_AVAIL_GB" ] && [ "$psi" -lt "$MAX_PSI" ]
 }
 
