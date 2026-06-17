@@ -14,6 +14,21 @@
       force = true;
       mutable = true;
     };
+    # HyDE's sensorsinfo.py does `int(f.read().strip())` on /tmp/sensorinfo_page;
+    # when that file is empty (its save_current_page truncates-then-writes, so a
+    # concurrent waybar poll can read it mid-write) it raises ValueError, breaking
+    # the cpuinfo module and spamming the journal on every poll. Default the parse
+    # to page 0. Sourced from the raw hyde input like defaults.conf above, since
+    # hyde-modified's build seds don't touch this file (raw == modified verified).
+    ".local/lib/hyde/sensorsinfo.py" = lib.mkForce {
+      source = pkgs.runCommand "hyde-sensorsinfo.py" { } ''
+        sed 's/page = int(f.read().strip())/page = int(f.read().strip() or 0)/' \
+          ${inputs.hydenix.inputs.hyde}/Configs/.local/lib/hyde/sensorsinfo.py > "$out"
+      '';
+      force = true;
+      mutable = true;
+      executable = true;
+    };
     ".config/fcitx5/profile" = {
       source = ./home/fcitx5/profile;
       force = true;
@@ -143,6 +158,12 @@
       source = ./scripts/gif-build.sh;
       force = true;
       mutable = true;
+    };
+    ".local/share/bin/clip2remote" = {
+      source = ./scripts/clip2remote;
+      force = true;
+      mutable = true;
+      executable = true;
     };
     ".local/share/bin/mem-inspector.sh" = {
       source = ./scripts/mem-inspector.sh;

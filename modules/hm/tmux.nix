@@ -76,6 +76,13 @@
       # hardcoded value, and must not clobber DISPLAY/SSH_AUTH_SOCK/etc.
       set -ga update-environment WAYLAND_DISPLAY
 
+      # Same rationale for Hyprland's per-instance signature: `hyprctl` needs it,
+      # but tmux-main and panes that predate a compositor restart don't carry it,
+      # so `hyprctl reload` fails with "HYPRLAND_INSTANCE_SIGNATURE not set".
+      # Refresh it from the attaching client (a compositor-launched terminal
+      # always has the current value).
+      set -ga update-environment HYPRLAND_INSTANCE_SIGNATURE
+
       # Keep CWD when splitting/creating windows
       bind '"' split-window -v -c "#{pane_current_path}"
       bind '%' split-window -h -c "#{pane_current_path}"

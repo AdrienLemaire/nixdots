@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# clip2remote — push the clipboard image to a remote box, then put its remote
+# path on the local clipboard (and print it). Paste that path into an ssh'd
+# tmux Claude session running on $REMOTE; Claude reads the file by that path.
+set -euo pipefail
+
+REMOTE="${CLIP_REMOTE:-md-atlas}"          # ~/.ssh/config host alias (not mosh)
+REMOTE_DIR="${CLIP_REMOTE_DIR:-/tmp/clip}"
+name="clip-$(date +%Y%m%d-%H%M%S).png"
+local="$(mktemp).png"
+trap 'rm -f "$local"' EXIT
+
+fail() {
+  notify-send -u critical "clip2remote" "$1" 2>/dev/null || true
+  echo "clip2remote: $1" >&2
+  exit 1
+}
+
+# --- grab the clipboard image + pick the clipboard 'set' command for this OS ---
+if command -v pngpaste >/dev/null 2>&1; then            # macOS: brew install pngpaste
+  pngpaste "$local" 2>/dev/null || true
+  clip_set() { pbcopy; }
+elif command -v wl-paste >/dev/null 2>&1; then          # Linux / Wayland
+  wl-paste --type image/png > "$local" 2>/dev/null || true
+  clip_set() { wl-copy; }
+else                                                     # Linux / X11
+  xclip -selection clipboard -t image/png -o > "$local" 2>/dev/null || true
+  clip_set() { xclip -selection clipboard; }
+fi
+
+[ -s "$local" ] || fail "no image in clipboard"
+
+ssh "$REMOTE" "mkdir -p '$REMOTE_DIR'" || fail "ssh $REMOTE failed"
+scp -q "$local" "$REMOTE:$REMOTE_DIR/$name" || fail "scp to $REMOTE failed"
+
+# swap the local clipboard: image -> remote path, and print it for terminal use
+printf '%s' "$REMOTE_DIR/$name" | clip_set
+echo "$REMOTE_DIR/$name"
+
+notify-send "clip2remote" "image copied to $REMOTE — path on clipboard:
+$REMOTE_DIR/$name" 2>/dev/null || true

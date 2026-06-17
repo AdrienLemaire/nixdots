@@ -5,6 +5,7 @@
     # ./example.nix - add your modules here
     ./files.nix
     ./fonts.nix
+    ./hypr-reload.nix
     ./swww-compat.nix
     ./tmux.nix
     ./common
