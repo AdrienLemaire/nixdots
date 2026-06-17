@@ -68,6 +68,14 @@
       set -g set-titles on
       set -g set-titles-string "#S:#I #T"
 
+      # Carry WAYLAND_DISPLAY into panes so wl-copy/wl-paste (and Claude Code's
+      # image paste, which shells out to wl-paste) can reach the compositor.
+      # tmux's default update-environment omits it, and this server is a
+      # long-lived user service (tmux-main) that outlives compositor restarts —
+      # so refresh-from-client-on-attach (-ga, append) is correct over a
+      # hardcoded value, and must not clobber DISPLAY/SSH_AUTH_SOCK/etc.
+      set -ga update-environment WAYLAND_DISPLAY
+
       # Keep CWD when splitting/creating windows
       bind '"' split-window -v -c "#{pane_current_path}"
       bind '%' split-window -h -c "#{pane_current_path}"

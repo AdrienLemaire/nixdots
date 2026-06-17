@@ -1,0 +1,100 @@
+#cloud-config
+# Self-configuration for the Hetzner CX53 dev box.
+# Brings up: Nix (for the md-atlas flake), Node 22 + pnpm, Claude Code CLI,
+# tmux, mosh — and starts a persistent tmux session named "main" ready to run claude.
+# Runs once on first boot as root.
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - curl
+  - git
+  - tmux
+  - mosh
+  - build-essential
+  - ca-certificates
+  - xz-utils
+  - htop
+
+write_files:
+  # A login-time helper so `tmux attach` lands you in a ready session.
+  - path: /etc/profile.d/devbox.sh
+    permissions: "0644"
+    content: |
+      # Attach to (or create) the persistent dev session on interactive SSH login.
+      if [ -n "$PS1" ] && [ -z "$TMUX" ] && command -v tmux >/dev/null 2>&1; then
+        if [ -z "$SSH_TTY" ]; then :; else
+          tmux attach -t main 2>/dev/null || tmux new-session -s main
+        fi
+      fi
+
+  # systemd unit that owns the long-lived tmux server so it survives logouts/reboots.
+  # Idempotent: never fails if a 'main' session already exists.
+  - path: /etc/systemd/system/devbox-tmux.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Persistent dev tmux session (main)
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/bin/sh -c '/usr/bin/tmux has-session -t main 2>/dev/null || /usr/bin/tmux new-session -d -s main'
+      ExecStop=/usr/bin/tmux kill-session -t main
+
+      [Install]
+      WantedBy=multi-user.target
+
+  # Remote tmux config: distinct prefix (C-a) + loud red HETZNER bar so a session
+  # nested inside the laptop's local tmux (prefix C-b) never collides.
+  - path: /root/.tmux.conf
+    permissions: "0644"
+    content: |
+      set -g prefix C-a
+      unbind C-b
+      bind C-a send-prefix
+      set -g mouse on
+      set -g history-limit 50000
+      setw -g mode-keys vi
+      set -g base-index 1
+      setw -g pane-base-index 1
+      set -g renumber-windows on
+      set -g default-terminal "tmux-256color"
+      set -ga terminal-overrides ",*256col*:Tc,xterm-ghostty:Tc"
+      set -sg escape-time 10
+      bind '"' split-window -v -c "#{pane_current_path}"
+      bind % split-window -h -c "#{pane_current_path}"
+      bind c new-window -c "#{pane_current_path}"
+      set -g status on
+      set -g status-style "bg=colour52,fg=colour231"
+      set -g status-left "#[bg=colour196,fg=colour231,bold] HETZNER #[bg=colour52,fg=colour231] #S "
+      set -g status-left-length 28
+      set -g window-status-current-format "#[bg=colour88,fg=colour231,bold] #I:#W "
+      set -g window-status-format " #I:#W "
+      set -g status-right "#[fg=colour231]#H  %Y-%m-%d %H:%M "
+      set -g status-right-length 40
+
+runcmd:
+  # 1. Nix (Determinate Systems installer — robust on cloud, multi-user daemon).
+  - curl -fsSL https://install.determinate.systems/nix | sh -s -- install --no-confirm
+  # 2. Node 22 + pnpm via NodeSource so global npm installs are simple and on PATH.
+  - curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+  - apt-get install -y nodejs
+  - corepack enable && corepack prepare pnpm@latest --activate
+  # 3. Claude Code CLI, installed to a root-owned global prefix on PATH.
+  - mkdir -p /root/.npm-global
+  - npm config set prefix /root/.npm-global
+  - npm install -g @anthropic-ai/claude-code
+  - 'echo "export PATH=/root/.npm-global/bin:\$PATH" > /etc/profile.d/npm-global.sh'
+  # 4. Bring up the persistent tmux session and make it boot-persistent.
+  - systemctl daemon-reload
+  - systemctl enable --now devbox-tmux.service
+  # 5. Seed the session: drop into a shell ready to run `claude` (auth happens on first attach).
+  - sleep 3
+  - "tmux send-keys -t main 'echo Dev box ready - run claude to start (first run prompts for auth)' C-m"
+  - touch /root/.devbox-ready
+
+final_message: "Hetzner dev box configured in $UPTIME s — tmux session 'main' is live."

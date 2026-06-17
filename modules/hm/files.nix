@@ -1,5 +1,19 @@
-{ lib, ... }: {
+{ lib, pkgs, inputs, ... }: {
   home.file = {
+    # HyDE's defaults.conf sets the dwindle:pseudotile option, removed in Hyprland
+    # 0.55; it errors the config (Error Overlay) on every `hyprctl reload`.
+    # Patch the line out of the upstream hyde source instead of forking the whole
+    # file, so this stays drift-proof: it re-applies when the hyde input updates.
+    # (hyde-modified's build-phase seds don't touch defaults.conf, so the raw
+    # source is equivalent here. pseudotiling still works via the `pseudo` dispatcher.)
+    ".local/share/hypr/defaults.conf" = lib.mkForce {
+      source = pkgs.runCommand "hypr-defaults.conf" { } ''
+        sed '/^[[:space:]]*pseudotile[[:space:]]*=/d' \
+          ${inputs.hydenix.inputs.hyde}/Configs/.local/share/hypr/defaults.conf > "$out"
+      '';
+      force = true;
+      mutable = true;
+    };
     ".config/fcitx5/profile" = {
       source = ./home/fcitx5/profile;
       force = true;
@@ -30,6 +44,18 @@
 
     ".config/hypr/keybindings.conf" = lib.mkForce {
       source = ./home/hypr/keybindings.conf;
+      force = true;
+      mutable = true;
+    };
+    # HyDE's dynamic.conf sources these unconditionally; provide placeholders so
+    # they resolve (otherwise the startup Error Overlay shows globbing errors).
+    ".config/hypr/nvidia.conf" = {
+      source = ./home/hypr/nvidia.conf;
+      force = true;
+      mutable = true;
+    };
+    ".config/hypr/hyde.conf" = {
+      source = ./home/hypr/hyde.conf;
       force = true;
       mutable = true;
     };

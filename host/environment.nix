@@ -57,6 +57,7 @@
 
     # TERMINALS
     ghostty
+    mosh  # roaming SSH replacement — survives sleep/network changes (remote dev box)
 
     # AI
     # aider-chat
