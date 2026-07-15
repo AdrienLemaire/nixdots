@@ -3,7 +3,9 @@
   programs.gnupg.agent = {
     enable = true;
     enableSSHSupport = true;
-    pinentryPackage = pkgs.pinentry-curses;
+    # GUI pinentry: curses needs a controlling TTY, which processes spawned
+    # inside tmux/Claude Code don't have, so the prompt could never be shown.
+    pinentryPackage = pkgs.pinentry-qt;
     # These settings help with passphrase caching
     # in /etc/gnupg/gpg-agent.conf
     settings = {

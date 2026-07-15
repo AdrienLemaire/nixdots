@@ -39,3 +39,4 @@ cz() {
   tmux new-session -A -s main
 }
 
+export PATH="$HOME/.local/bin:$PATH"

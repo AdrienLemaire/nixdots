@@ -6,6 +6,7 @@
     ./files.nix
     ./fonts.nix
     ./hypr-reload.nix
+    ./hypridle-recycle.nix
     ./swww-compat.nix
     ./tmux.nix
     ./common
