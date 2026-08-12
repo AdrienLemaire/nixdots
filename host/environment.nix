@@ -51,6 +51,7 @@
     ffmpeg
     yt-dlp
     zathura
+    imv  # image viewer
     # llpp
     gimp3-with-plugins
 
@@ -142,6 +143,19 @@
       "x-scheme-handler/about" = "firefox.desktop";
       "x-scheme-handler/unknown" = "firefox.desktop";
       "application/pdf" = "zathura.desktop";
-    };
+    }
+    # imv, not swappy — swappy is the screenshot annotator and claims these too
+    // lib.genAttrs [
+      "image/png"
+      "image/jpeg"
+      "image/gif"
+      "image/webp"
+      "image/tiff"
+      "image/bmp"
+      "image/avif"
+      "image/heif"
+      "image/jxl"
+      "image/svg+xml"
+    ] (_: "imv.desktop");
   };
 }
