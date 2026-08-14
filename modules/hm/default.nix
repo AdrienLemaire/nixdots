@@ -76,8 +76,16 @@
             }
 
             sensitivity = 0
-            force_no_accel = 1
+            accel_profile = flat
+            # force_no_accel bypasses libinput entirely, which also discards
+            # `sensitivity`. flat profile = no acceleration, but scalable.
+            force_no_accel = 0
             numlock_by_default = true
+        }
+        device {
+          name = pebble-m350s-mouse
+          accel_profile = flat
+          sensitivity = 1.0
         }
         device {
           name = pebble-k380s
