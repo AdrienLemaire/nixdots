@@ -1,0 +1,29 @@
+// JIS (jp 106) base + qwerty-fr AltGr accents, single group.
+//
+// Include order is the whole trick: qwerty-fr first (it restates all four
+// levels), then jp(106) on top. libxkbcommon merges per level with
+// later-wins, so jp's two levels reassert the JIS legends while qwerty-fr's
+// levels 3-4 survive untouched. Reversing the order clobbers the JIS base.
+//
+// <RALT> = ISO_Level3_Shift comes from qwerty-fr's own
+// include "level3(ralt_switch)" -- no lv3: kb_option is needed, and a
+// compose:ralt option would override it and silently kill every accent.
+partial alphanumeric_keys
+xkb_symbols "jp_qwerty-fr" {
+
+    include "us_qwerty-fr(qwerty-fr)"
+    include "jp(106)"
+
+    // <TLDE> keeps jp's PC_ALT_LEVEL2 type (Zenkaku_Hankaku/Kanji, needed by
+    // the IME toggle), which is only two levels wide -- so qwerty-fr's
+    // dead_tilde is dropped there. Relocate it onto JIS's own ^~ key.
+    key <AE12> { [ NoSymbol, NoSymbol, NoSymbol, dead_tilde ] };
+
+    // Compose on Right Shift. RAlt is taken by ISO_Level3_Shift (the accents)
+    // and no stock compose: option targets a Shift key, so bind it here.
+    // pc's `modifier_map Shift { Shift_L, Shift_R }` maps by keysym, so
+    // dropping Shift_R here also drops this key out of the Shift modifier.
+    replace key <RTSH> { type[group1] = "ONE_LEVEL", [ Multi_key ] };
+
+    name[Group1] = "Japanese (JIS) with french symbols - AltGr combination";
+};

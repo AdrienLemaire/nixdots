@@ -92,6 +92,13 @@
           kb_layout = jp
           kb_options = compose:ralt
         }
+        device {
+          name = mx-keys-mini
+          # JIS legends at levels 1-2, qwerty-fr accents on AltGr (e.g. AltGr+W = é).
+          # No kb_options here on purpose: compose:ralt would rebind RAlt to
+          # Multi_key and make every level-3 accent unreachable.
+          kb_layout = jp_qwerty-fr
+        }
 
         exec-once=fcitx5 -d -r
         exec-once = [workspace 2 silent] firefox
