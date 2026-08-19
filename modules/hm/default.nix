@@ -87,8 +87,18 @@
           accel_profile = flat
           sensitivity = 1.0
         }
+        # Both BLE keyboards are blacklisted off hid-vivaldi (see host/config.nix),
+        # and hid-generic names the keyboard collection "<device> Keyboard" ->
+        # hyprland "<device>-keyboard". Rules are kept under both names so the
+        # layout survives regardless of which driver binds. Hyprland ignores
+        # rules for devices that are not present.
         device {
           name = pebble-k380s
+          kb_layout = jp
+          kb_options = compose:ralt
+        }
+        device {
+          name = pebble-k380s-keyboard
           kb_layout = jp
           kb_options = compose:ralt
         }
@@ -97,6 +107,10 @@
           # JIS legends at levels 1-2, qwerty-fr accents on AltGr (e.g. AltGr+W = é).
           # No kb_options here on purpose: compose:ralt would rebind RAlt to
           # Multi_key and make every level-3 accent unreachable.
+          kb_layout = jp_qwerty-fr
+        }
+        device {
+          name = mx-keys-mini-keyboard
           kb_layout = jp_qwerty-fr
         }
 

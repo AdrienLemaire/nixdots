@@ -8,7 +8,6 @@
 
     ./environment.nix
     ./services.nix
-    ./systemd.nix
     ../modules/system/input.nix
     ../modules/system/development.nix
     ../modules/system/security.nix
@@ -38,6 +37,15 @@
   boot = {
     kernelParams = [ "i915.enable_psr=0" "i915.force_probe=4680" "dell_laptop.rfkill=0" ]; # "resume_offset=106506240" ];
     kernelModules = [ "snd_soc_rt715_sdca" "snd_sof_pci_intel_tgl" "kvm-intel" "iwlwifi" ];
+
+    # hid-vivaldi costs ~3 s on every BLE keyboard reconnect. Its
+    # vivaldi_feature_mapping() does a synchronous blocking feature-report read
+    # once per function-row key during probe -- 12 keys, 12 GATT round trips
+    # over the air, before the input device is registered. All twelve return
+    # 0x000C0000 on the MX Keys Mini, so the remap data it buys is degenerate.
+    # Measured: link->usable hid=3.17s with it, hid=0.11s without.
+    # Falls back to hid-generic. See docs/bluetooth-reconnect-findings.md.
+    blacklistedKernelModules = [ "hid_vivaldi" ];
     loader.systemd-boot.configurationLimit = 5;
   };
 
@@ -82,18 +90,30 @@
     # wireless.enable = true;
   };
 
-  # K380s BLE keyboard hits HCI Reason 0x08 Connection Timeout every ~30 min
-  # because the negotiated supervision timeout sits at 2.1 s and the host's BLE
-  # link scheduler occasionally stalls longer than that on idle peripherals.
-  # The kernel debugfs default is bypassed by LE Extended Create Connection;
-  # bluez reads these values directly when issuing the command. Units:
-  # MinConnectionInterval / MaxConnectionInterval are in 1.25 ms; ConnectionLatency is a
-  # count of intervals the peripheral may skip; ConnectionSupervisionTimeout is in 10 ms.
+  # These govern the INITIAL LE connection only. Verified by HCI trace
+  # (docs/bt-trace.sh): the link comes up on these values, then ~165 ms later
+  # the keyboard sends an L2CAP Connection Parameter Update Request and bluez
+  # accepts it unconditionally -- the kernel only sanity-checks against spec
+  # ranges, there is no policy hook. The MX Keys Mini pulls the link to
+  # 22.5 ms / latency 20 / supervision 2100 ms and that is where it stays.
+  #
+  # So ConnectionSupervisionTimeout = 600 does NOT hold: 2100 ms is exactly the
+  # value blamed for the Reason 0x08 Connection Timeout drops, and the keyboard
+  # restores it within half a second of every connect. Keeping it because it
+  # costs nothing and still covers the connection window, but do not count on
+  # it -- see docs/bluetooth-reconnect-findings.md for the full trace analysis.
+  #
+  # The fast interval is likewise a setup-window optimisation, not a
+  # steady-state one, which also means it is nearly free: enumeration is ATT
+  # round-trip bound (184 PDUs, median 44 ms each) and only its first ~450 ms
+  # runs at our interval. Measured gain 0.35 s of ~3.5 s. Units: intervals are
+  # in 1.25 ms, ConnectionLatency counts intervals the peripheral may skip,
+  # ConnectionSupervisionTimeout is in 10 ms.
   hardware.bluetooth.settings.LE = {
-    MinConnectionInterval = 24;          # 30 ms
-    MaxConnectionInterval = 40;          # 50 ms
+    MinConnectionInterval = 6;           # 7.5 ms
+    MaxConnectionInterval = 12;          # 15 ms
     ConnectionLatency = 0;
-    ConnectionSupervisionTimeout = 600;  # 6000 ms (was negotiated at 2100 ms)
+    ConnectionSupervisionTimeout = 600;  # 6000 ms; keyboard resets it to 2100
   };
 
 
