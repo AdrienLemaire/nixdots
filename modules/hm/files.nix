@@ -1,33 +1,65 @@
-{ lib, pkgs, inputs, ... }: {
-  home.file = {
-    # HyDE's defaults.conf sets the dwindle:pseudotile option, removed in Hyprland
-    # 0.55; it errors the config (Error Overlay) on every `hyprctl reload`.
-    # Patch the line out of the upstream hyde source instead of forking the whole
-    # file, so this stays drift-proof: it re-applies when the hyde input updates.
-    # (hyde-modified's build-phase seds don't touch defaults.conf, so the raw
-    # source is equivalent here. pseudotiling still works via the `pseudo` dispatcher.)
-    ".local/share/hypr/defaults.conf" = lib.mkForce {
-      source = pkgs.runCommand "hypr-defaults.conf" { } ''
-        sed '/^[[:space:]]*pseudotile[[:space:]]*=/d' \
-          ${inputs.hydenix.inputs.hyde}/Configs/.local/share/hypr/defaults.conf > "$out"
-      '';
-      force = true;
-      mutable = true;
-    };
+{ lib, pkgs, ... }:
+let
+  # hydenix links HyDE's config trees with `recursive = true` *directory* entries
+  # (home.file.".local/share/hypr/" in its hyprland module, ".local/lib/hyde" in
+  # its hyde module). A per-file `home.file."<dir>/<file>"` override is a
+  # different attribute key, so lib.mkForce on it has nothing to override and is
+  # silently a no-op -- the file linked from the directory wins. Three patches
+  # here were dead code for weeks that way (verified: the deployed files were
+  # byte-identical to hyde-modified's). Patch the directory *source* instead,
+  # which is the key hydenix actually sets. Both trees are copied from pkgs.hyde
+  # (hydenix's own modified hyde, not the raw input) so its build-phase seds are
+  # preserved, and the patches re-apply when the hyde input updates.
+  patchedHyprConfigs = pkgs.runCommand "hyde-hypr-configs" { } ''
+    cp -r ${pkgs.hyde}/Configs/.local/share/hypr $out
+    chmod -R u+w $out
+    # dwindle:pseudotile was removed in Hyprland 0.55. Verified against the
+    # running compositor: `hyprctl getoption dwindle:pseudotile` -> "no such
+    # option", and there is no renamed equivalent (misc:/general:/dwindle:pseudo
+    # are all absent). The `pseudo` dispatcher still works, so only the config
+    # option goes; the keybind that uses it is unaffected.
+    sed -i '/^[[:space:]]*pseudotile[[:space:]]*=/d' $out/defaults.conf
+    # The vendored HyDE revision's windowrules.conf predates Hyprland's v0.53+
+    # window-rule syntax and emits 108 parse errors against 0.55. Our copy is the
+    # newer upstream file plus the two variables HyDE would otherwise set by
+    # version detection ($WINDOWRULES_HYPRLAND_V_0_53 and $&), which hydenix does
+    # not vendor. It already deploys cleanly to .config/hypr/windowrules.conf.
+    cp ${./home/hypr/windowrules.conf} $out/windowrules.conf
+  '';
+  patchedHydeLib = pkgs.runCommand "hyde-lib" { } ''
+    cp -r ${pkgs.hyde}/Configs/.local/lib/hyde $out
+    chmod -R u+w $out
     # HyDE's sensorsinfo.py does `int(f.read().strip())` on /tmp/sensorinfo_page;
     # when that file is empty (its save_current_page truncates-then-writes, so a
     # concurrent waybar poll can read it mid-write) it raises ValueError, breaking
-    # the cpuinfo module and spamming the journal on every poll. Default the parse
-    # to page 0. Sourced from the raw hyde input like defaults.conf above, since
-    # hyde-modified's build seds don't touch this file (raw == modified verified).
-    ".local/lib/hyde/sensorsinfo.py" = lib.mkForce {
-      source = pkgs.runCommand "hyde-sensorsinfo.py" { } ''
-        sed 's/page = int(f.read().strip())/page = int(f.read().strip() or 0)/' \
-          ${inputs.hydenix.inputs.hyde}/Configs/.local/lib/hyde/sensorsinfo.py > "$out"
-      '';
-      force = true;
-      mutable = true;
+    # the cpuinfo module and spamming the journal on every poll. Default to page 0.
+    sed -i 's/page = int(f.read().strip())/page = int(f.read().strip() or 0)/' \
+      $out/sensorsinfo.py
+    # cpuinfo.sh builds waybar's JSON by hand and joins the per-core temperatures
+    # with jq's join("\\n\t"). In a jq string literal "\\n" is the two-character
+    # escape \n (what the JSON needs) but "\t" is a *real* tab byte, which is an
+    # illegal control character inside a JSON string. waybar then rejects every
+    # poll: "custom/cpuinfo: Error parsing JSON: Control character in string"
+    # -- 3436 of them in one hour on 2026-08-30. Escape the tab like the newline.
+    sed -i 's/join("\\\\n\\t")/join("\\\\n\\\\t")/' $out/cpuinfo.sh
+    # Installed next to HyDE's own scripts so keybindings.conf can reach it via
+    # $scrPath, the same way every other bind in that file does. It has to go in
+    # the tree rather than its own home.file entry for the reason above.
+    cp ${./scripts/brightness-all.sh} $out/brightness-all.sh
+    chmod +x $out/brightness-all.sh
+  '';
+in
+{
+  home.file = {
+    ".local/share/hypr/" = lib.mkForce {
+      source = patchedHyprConfigs;
+      recursive = true;
+    };
+    ".local/lib/hyde" = lib.mkForce {
+      source = patchedHydeLib;
+      recursive = true;
       executable = true;
+      force = true;
     };
     ".config/fcitx5/profile" = {
       source = ./home/fcitx5/profile;
@@ -75,16 +107,13 @@
       mutable = true;
     };
     ".config/hypr/windowrules.conf" = lib.mkForce {
-    #".local/share/hypr/windowrules.conf" = lib.mkForce {
       source = ./home/hypr/windowrules.conf;
       force = true;
       mutable = true;
     };
-    ".local/share/hypr/windowrules.conf" = lib.mkForce {
-      source = ./home/hypr/windowrules.conf;
-      force = true;
-      mutable = true;
-    };
+    # NB: .local/share/hypr/windowrules.conf is NOT declared here -- it is
+    # supplied by the patchedHyprConfigs tree above, since a per-file entry
+    # under hydenix's recursive directory entry would be a silent no-op.
 
 
     # ".config/hypr/userprefs.conf" = lib.mkForce {
@@ -171,6 +200,8 @@
       mutable = true;
       executable = true;
     };
+    # NB: .local/lib/hyde/brightness-all.sh is NOT declared here -- it is
+    # supplied by the patchedHydeLib tree above, for the same reason.
     ".local/share/bin/claude-statusline.sh" = {
       source = ./scripts/claude-statusline.sh;
       force = true;

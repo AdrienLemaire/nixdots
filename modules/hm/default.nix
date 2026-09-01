@@ -114,7 +114,11 @@
           kb_layout = jp_qwerty-fr
         }
 
-        exec-once=fcitx5 -d -r
+        # fcitx5 is supervised by systemd --user (modules/system/input.nix)
+        # so it comes back if it dies. reset-failed clears a start-limit hit
+        # left by a previous session; restart rather than start discards any
+        # instance that outlived the last compositor, which Linger=yes allows.
+        exec-once = systemctl --user reset-failed fcitx5.service ; systemctl --user restart fcitx5.service
         exec-once = [workspace 2 silent] firefox
         exec-once = [workspace 1 silent] ghostty
       '';
