@@ -165,6 +165,9 @@
           windowrulev2 = float, class:^(mem-inspector)$
           windowrulev2 = center, class:^(mem-inspector)$
           windowrulev2 = size 1400 800, class:^(mem-inspector)$
+          windowrulev2 = float, class:^(dev\.dori\.goals)$
+          windowrulev2 = size 480 660, class:^(dev\.dori\.goals)$
+          windowrulev2 = center, class:^(dev\.dori\.goals)$
         '';
         overrideConfig = null; # complete window rules configuration override (null or lib.types.lines)
       };

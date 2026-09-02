@@ -200,6 +200,12 @@ in
       mutable = true;
       executable = true;
     };
+    ".local/share/bin/goals-today.sh" = {
+      source = ./scripts/goals-today.sh;
+      force = true;
+      mutable = true;
+      executable = true;
+    };
     # NB: .local/lib/hyde/brightness-all.sh is NOT declared here -- it is
     # supplied by the patchedHydeLib tree above, for the same reason.
     ".local/share/bin/claude-statusline.sh" = {
