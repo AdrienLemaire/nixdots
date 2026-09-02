@@ -72,7 +72,10 @@ $env.config.hooks.env_change.PWD = [
     {|before, after| direnv export json | from json | default {} | load-env }
 ]
 
-$env.ANTHROPIC_API_KEY = (pass show personal/Anthropic_API)
+# Disabled 2026-09-02: an ANTHROPIC_API_KEY in the environment takes precedence over the
+# claude.ai login and disables org connectors in Claude Code. Re-enable only if a script
+# needs raw API access -- and prefer scoping it to that script rather than the whole session.
+# $env.ANTHROPIC_API_KEY = (pass show personal/Anthropic_API)
 $env.OPENAI_API_KEY = (pass show personal/OpenAI_API)
 
 # do --env {

@@ -40,3 +40,28 @@ cz() {
 }
 
 export PATH="$HOME/.local/bin:$PATH"
+
+# Topic-scoped Claude sessions. Each one cds first, because Claude Code scopes a
+# session to its working directory: history, project memory and CLAUDE.md all come
+# from there. That keeps goal-tracking context out of code sessions and vice versa.
+# These call the claude() wrapper above, so the tmux account marker still works.
+# Pass -c to continue that directory's most recent session: `goals -c`.
+_goals_dir=~/Projects/Perso/personal-goals
+
+goals() { cd "$_goals_dir" && claude "$@"; }
+dev()   { cd ~/Projects/Perso/cartoucherie && claude "$@"; }
+
+# goal <name> -- a session narrowed to ONE goal, e.g. `goal sport`.
+# Same repo, same memory, same skills; only the system prompt is scoped, so a
+# check-in about the dog doesn't drag in six other goals.
+goal() {
+  if [ $# -eq 0 ]; then
+    echo "usage: goal <name>" >&2
+    (cd "$_goals_dir" && ls *.md | grep -v -E '^(README|CLAUDE|streaks)\.md$' | sed 's/\.md$//' | sed 's/^/  /') >&2
+    return 1
+  fi
+  local g=$1; shift
+  [ -f "$_goals_dir/$g.md" ] || { echo "no such goal: $g" >&2; return 1; }
+  cd "$_goals_dir" && claude --append-system-prompt \
+    "This session is scoped to one goal: $g.md. Read README.md, $g.md and the newest weekly/ file, then respond. Do not review or report on the other goals unless explicitly asked." "$@"
+}
