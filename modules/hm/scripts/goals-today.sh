@@ -5,4 +5,6 @@
 # prints ~60 harmless rejections of -gtktreeview-* properties on every launch.
 set -u
 REPO="$HOME/Projects/Perso/personal-goals"
-exec "$REPO/bin/goalstate" 2>/dev/null | "$REPO/bin/goals-window" 2>/dev/null
+# goals-python (modules/hm/goals-window.nix) is a python with GI_TYPELIB_PATH baked
+# in; a bare python3 cannot find Gtk-4.0 outside a GTK app's own wrapper environment.
+exec "$REPO/bin/goalstate" 2>/dev/null | goals-python "$REPO/bin/goals-window" 2>/dev/null
