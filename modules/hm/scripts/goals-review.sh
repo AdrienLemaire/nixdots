@@ -6,5 +6,6 @@
 # stderr is dropped because HyDE's gtk.css is a GTK3-era stylesheet and GTK4
 # prints ~60 harmless rejections of -gtktreeview-* properties on every launch.
 set -u
+# GOALS_REPO is honoured via a unit Environment= or Hyprland's env=, never via goals-open.sh, which strips the environment.
 REPO="${GOALS_REPO:-$HOME/Projects/Perso/personal-goals}"
 exec "$REPO/bin/goalstate" 2>/dev/null | goals-python "$REPO/bin/goals-review" 2>/dev/null

@@ -5,14 +5,24 @@
 # the laptop at 22:00 would otherwise deliver a morning brief at bedtime. The
 # hour check is the guard: after noon, a morning brief is not a morning brief.
 # %-H, not %H: an unpadded hour, because 08 is not a valid octal number.
+# Budget: up to 30s waiting for dunst + ~12s for the fold + up to 60s for the
+# notification is comfortably under the unit's 120s TimeoutStartSec.
 set -u
 hour=$(date +%-H)
 [ "$hour" -ge 12 ] && exit 0
+# A catch-up fire at 02:00 is not a morning brief either -- Persistent=true
+# only coalesces a *missed* window, and a boot in the small hours is not one.
+[ "$hour" -lt 6 ] && exit 0
 
+# GOALS_REPO is honoured via a unit Environment= or Hyprland's env=, never via goals-open.sh, which strips the environment.
 REPO="${GOALS_REPO:-$HOME/Projects/Perso/personal-goals}"
 # Catches a skipped evening review: the fold is what keeps a self-report from
-# evaporating, so it runs before anything is shown.
+# evaporating, so it runs before anything is shown -- regardless of whether
+# dunst is up yet.
 "$REPO/bin/cadence-fold" >/dev/null 2>&1 || true
+
+. "$HOME/.local/share/bin/goals-lib.sh"
+wait_for_dunst || exit 0
 
 # --action uses a comma; notify-send's = would silently send no actions at all.
 # The action is named `default` so middle-click works: dunst 1.13.2 draws no

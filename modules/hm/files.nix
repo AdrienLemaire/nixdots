@@ -200,6 +200,12 @@ in
       mutable = true;
       executable = true;
     };
+    ".local/share/bin/goals-lib.sh" = {
+      source = ./scripts/goals-lib.sh;
+      force = true;
+      mutable = true;
+      executable = true;
+    };
     ".local/share/bin/goals-today.sh" = {
       source = ./scripts/goals-today.sh;
       force = true;
