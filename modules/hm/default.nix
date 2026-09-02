@@ -153,22 +153,17 @@
       # Keybindings configurations
       keybindings = {
         enable = true; # enable keybindings configurations
-        extraConfig = ''
-          bind = SUPER, escape, exec, ~/.local/share/bin/mem-inspector.sh
-        '';
+        # DEAD for the same reason (files.nix overrides keybindings.conf). The
+        # SUPER+escape bind lives in home/hypr/keybindings.conf.
+        extraConfig = "";
         overrideConfig = null; # complete keybindings configuration override (null or lib.types.lines)
       };
       # Window rules configurations
       windowrules = {
         enable = true; # enable window rules configurations
-        extraConfig = ''
-          windowrulev2 = float, class:^(mem-inspector)$
-          windowrulev2 = center, class:^(mem-inspector)$
-          windowrulev2 = size 1400 800, class:^(mem-inspector)$
-          windowrulev2 = float, class:^(dev\.dori\.goals)$
-          windowrulev2 = size 480 660, class:^(dev\.dori\.goals)$
-          windowrulev2 = center, class:^(dev\.dori\.goals)$
-        '';
+        # DEAD: files.nix force-overrides .config/hypr/windowrules.conf, so anything
+        # here never reaches disk. Put rules in home/hypr/windowrules.conf instead.
+        extraConfig = "";
         overrideConfig = null; # complete window rules configuration override (null or lib.types.lines)
       };
       # NVIDIA configurations

@@ -28,22 +28,29 @@
             }
           ];
         };
-        # Mid: Node rules for EM037 and lavalier input (as before)
+        # Mid: Node priority rules for the lavalier and the laptop speakers.
+        # See the INERT note inside -- none of these currently apply.
         "50-audio-priority" = {
           monitor.rules = [
-            # EM037 Headphone Output (Sink) & Mic (Source) - high priority when connected
-            {
-              matches = [
-                { node.name = "bluez_output.A9_29_3B_FA_E5_4E.1"; }
-                { node.name = "bluez_input.A9:29:3B:FA:E5:4E"; }
-              ];
-              actions = {
-                "update-props" = {
-                  priority.driver = 2000;
-                  priority.session = 2000;
-                };
-              };
-            }
+            # NOTE (2026-09-02): every rule in this section is currently INERT.
+            # The key is `monitor.rules`, but WirePlumber only reads the
+            # per-monitor keys -- `monitor.alsa.rules` / `monitor.bluez.rules`,
+            # as used by the "10-maono-alsa" and "99-disable-suspension"
+            # sections above and below. Confirmed against the live daemon:
+            # the speaker sits at priority.session 712 (rule asks 1500), the
+            # lavalier output sink at 1009 (rule asks 0 + disabled), and the
+            # lavalier input at 2000 (rule asks 2500). Left as-is deliberately:
+            # repairing the key would activate four dormant rules at once,
+            # which is a behaviour change, not a cleanup. If you do fix it, note
+            # the lavalier input match is ALSO wrong -- the real node is
+            # ...-00.mono-fallback, not ...-00.pro-input-0 -- and re-check the
+            # speaker's 1500 against the "Speakers (Loud)" sink priority below.
+            #
+            # The EM037 rule that used to head this list was removed: that
+            # headset is no longer even paired (bluetoothctl lists only the
+            # MX Keys Mini, Pebble K380s, soundcore Space One, Pebble M350s and
+            # P10), so it matched nothing regardless of the key bug.
+            #
             # Lavalier Mic (Source) - ALWAYS highest input priority when connected
             {
               matches = [
@@ -119,14 +126,21 @@
     };
 
     # Audio optimization for XPS 13 Plus using drop-in configuration
+    #
+    # REMOVED (2026-09-02), do not re-add: a forced low-latency quantum,
+    #   "context.properties" = { "default.clock.quantum"     = 256;
+    #                            "default.clock.min-quantum" = 256;
+    #                            "default.clock.max-quantum" = 256; };
+    # It never took effect -- the attribute name is the drop-in FILENAME, so it
+    # emitted /etc/pipewire/pipewire.conf.d/context.properties.conf as a bare
+    # top-level JSON object with no context.properties section, which PipeWire
+    # ignores (live daemon ran the adaptive defaults: quantum 1024, min 32,
+    # max 2048). That was lucky: this card runs a 1024/8192-frame ALSA period
+    # and already underruns under load, so pinning min=max=256 to a 5.3 ms
+    # deadline would guarantee the dropouts it looked like it was preventing.
+    # Deleted rather than left commented-out precisely because "correcting" the
+    # Nix syntax would silently arm it. The rate was 48000 either way.
     extraConfig.pipewire = {
-      "context.properties" = {
-        "default.clock.rate" = 48000;
-        "default.clock.quantum" = 256;
-        "default.clock.min-quantum" = 256;
-        "default.clock.max-quantum" = 256;
-      };
-
       # Loudness chain for the built-in speakers.
       #
       # The rt1316 smart-amp path has NO headroom left: every hardware gain
@@ -141,14 +155,19 @@
       # loud and the whole 0-100 range stays usable for tweaking.
       #
       # NOTE: the attribute name is the drop-in FILENAME and the section has to
-      # live inside the value -- see the "context.properties" block above, which
-      # emits a bare top-level JSON object that PipeWire silently ignores.
-      # Getting this wrong here would mean no sink and no error.
+      # live inside the value -- hence "99-speakers-loud" wrapping a
+      # "context.modules" key, not a bare "context.modules" attribute. See the
+      # REMOVED quantum note above for what the other spelling does: it emits a
+      # bare top-level JSON object that PipeWire silently ignores. Getting this
+      # wrong here would mean no sink and no error.
       #
       # Speakers only: playback is pinned to the internal speaker node, so the
-      # Bluetooth headset and HDMI outs are untouched. priority.session 1000
-      # beats the raw speaker (712) but loses to the bluez rules (2000), so
-      # headphones still win automatically whenever they are connected.
+      # Bluetooth headset and HDMI outs are untouched. priority.session 1600
+      # beats the raw speaker (712 today) and stays ahead of the 1500 the
+      # dormant "50-audio-priority" speaker rule would apply if that section's
+      # key bug is ever fixed -- otherwise the raw sink would outrank this one
+      # and silently bypass the whole chain. Still below a connected headset,
+      # so Bluetooth continues to win automatically.
       # Verified against the live daemon before committing: both plugins open
       # and both links resolve (spa.filter-graph "successfully opened").
       "99-speakers-loud" = {
@@ -212,7 +231,7 @@
               "media.class" = "Audio/Sink";
               "audio.channels" = 2;
               "audio.position" = [ "FL" "FR" ];
-              "priority.session" = 1000;
+              "priority.session" = 1600;
             };
             "playback.props" = {
               "node.name" = "effect_output.speakers_loud";
