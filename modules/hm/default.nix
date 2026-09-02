@@ -228,7 +228,16 @@
     };
     waybar = {
       enable = true; # enable waybar module
-      userStyle = ""; # custom waybar user-style.css
+      userStyle = ''
+        /* HyDE defines no #custom-* selectors, so the module inherits @main-fg
+           and looks native. The semantic tier survives theme and wallpaper
+           changes; the 88 raw @wallbash_* vars do not. No red: nothing here is
+           wrong, and red is reserved for things that are. */
+        #custom-goals { padding: 0 8px; }
+        #custom-goals.done    { color: @wb-act-bg; }
+        #custom-goals.partial { color: @main-fg; }
+        #custom-goals.none    { color: @main-fg; }
+      ''; # custom waybar user-style.css
     };
     wlogout.enable = true; # enable wlogout module
     xdg.enable = true; # enable xdg module
