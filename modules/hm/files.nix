@@ -212,6 +212,30 @@ in
       mutable = true;
       executable = true;
     };
+    ".local/share/bin/goals-open.sh" = {
+      source = ./scripts/goals-open.sh;
+      force = true;
+      mutable = true;
+      executable = true;
+    };
+    ".local/share/bin/goals-review.sh" = {
+      source = ./scripts/goals-review.sh;
+      force = true;
+      mutable = true;
+      executable = true;
+    };
+    ".local/share/bin/goals-morning.sh" = {
+      source = ./scripts/goals-morning.sh;
+      force = true;
+      mutable = true;
+      executable = true;
+    };
+    ".local/share/bin/goals-evening.sh" = {
+      source = ./scripts/goals-evening.sh;
+      force = true;
+      mutable = true;
+      executable = true;
+    };
     # NB: .local/lib/hyde/brightness-all.sh is NOT declared here -- it is
     # supplied by the patchedHydeLib tree above, for the same reason.
     ".local/share/bin/claude-statusline.sh" = {

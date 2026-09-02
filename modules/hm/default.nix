@@ -5,6 +5,7 @@
     # ./example.nix - add your modules here
     ./files.nix
     ./fonts.nix
+    ./goals-notify.nix
     ./goals-window.nix
     ./hypr-reload.nix
     ./hypridle-recycle.nix
