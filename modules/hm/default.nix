@@ -238,6 +238,7 @@
         #custom-goals.done    { color: @wb-act-bg; }
         #custom-goals.partial { color: @main-fg; }
         #custom-goals.none    { color: @main-fg; }
+        #custom-goals.paused  { color: @main-fg; }
       ''; # custom waybar user-style.css
     };
     wlogout.enable = true; # enable wlogout module
