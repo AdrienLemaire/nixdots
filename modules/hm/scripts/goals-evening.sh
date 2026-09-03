@@ -15,7 +15,7 @@ wait_for_dunst || exit 0
 # Same mechanics as the morning: comma-separated action named `default`, the
 # cadence stack tag so nothing piles up, blocking so the click can be read.
 choice=$(dunstify --appname=cadence --urgency=low --timeout=60000 \
-  --hint=string:x-dunst-stack-tag:cadence \
+  --hint=string:x-dunst-stack-tag:cadence-evening \
   --action="default,Open" \
   "Evening review" "What happened today" 2>/dev/null)
 

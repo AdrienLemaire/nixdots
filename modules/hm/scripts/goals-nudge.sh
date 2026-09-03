@@ -31,7 +31,7 @@ IFS=$'\t' read -r kind id summary body <<<"$line"
 # dunstify only blocks when it has actions, so this returns at once.
 if [ "$kind" = "note" ]; then
   dunstify --appname=cadence --urgency=low --timeout=30000 \
-    --hint=string:x-dunst-stack-tag:cadence \
+    --hint=string:x-dunst-stack-tag:cadence-nudge \
     "$summary" "$body" >/dev/null 2>&1
   exit 0
 fi
@@ -47,13 +47,19 @@ fi
 # The process must block: dunst has no on-click exec, and `script =` fires on
 # arrival rather than on click.
 choice=$(dunstify --appname=cadence --urgency=low --timeout=30000 \
-  --hint=string:x-dunst-stack-tag:cadence \
+  --hint=string:x-dunst-stack-tag:cadence-nudge \
   --action="default,Mark done" --action="snooze,Snooze" \
   "$summary" "$body" 2>/dev/null)
+rc=$?
 
+# An empty choice means "expired unanswered" only when dunstify actually ran
+# the notification. dunst dying mid-wait, or dunstify itself failing to
+# launch, also leaves $choice empty but with a non-zero rc -- that is a
+# notification nobody ever saw, not one that was dismissed, so it must not
+# count against the dismissal cap.
 case "$choice" in
   default) "$REPO/bin/cadence-record" "$id" ;;
   snooze)  "$REPO/bin/cadence-record" "$id" snooze ;;
-  *)       "$REPO/bin/cadence-nudge" --dismissed ;;
+  *)       [ "$rc" -eq 0 ] && "$REPO/bin/cadence-nudge" --dismissed ;;
 esac
 exit 0

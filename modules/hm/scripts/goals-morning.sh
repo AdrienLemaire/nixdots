@@ -37,7 +37,7 @@ wait_for_dunst || exit 0
 # The process must block: dunst has no on-click exec, so blocking on dunstify
 # and dispatching on stdout is the only way a click can reach us.
 choice=$(dunstify --appname=cadence --urgency=low --timeout=60000 \
-  --hint=string:x-dunst-stack-tag:cadence \
+  --hint=string:x-dunst-stack-tag:cadence-morning \
   --action="default,Open" \
   "Today's program" "Six chains and this week's three" 2>/dev/null)
 

@@ -21,7 +21,7 @@ wait_for_dunst || exit 0
 # -- mission names and due dates from enfants-missions.md, next week's three,
 # the Sunday section -- which is the part a GUI cannot sensibly do.
 choice=$(dunstify --appname=cadence --urgency=low --timeout=60000 \
-  --hint=string:x-dunst-stack-tag:cadence \
+  --hint=string:x-dunst-stack-tag:cadence-sunday \
   --action="default,Open" \
   "Weekly review" "Ten minutes, when you have them" 2>/dev/null)
 
