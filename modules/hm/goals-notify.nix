@@ -2,8 +2,13 @@
 # The cadence timers: the two daily notifications, three nudge windows, the
 # Anki backlog sweep and the Sunday review.
 #
-# A timer must never open a window uninvited, so these post a notification and
-# nothing more; clicking it opens the window and ignoring it costs nothing.
+# A timer must never open a window uninvited. The four notifying units --
+# morning, nudge, evening, sunday -- post a notification and wait; only a
+# click opens anything, and ignoring it costs nothing. goals-anki-review is
+# the exception: it posts no notification at all, and stays silent unless
+# Anki is already open with a backlog at or above the threshold, in which
+# case it raises the existing Anki window -- it never launches Anki itself
+# when run from a timer (anki-review --no-launch).
 #
 # WantedBy is timers.target, never graphical-session.target: that target never
 # activates in this session (see hypridle-recycle.nix for the full story).

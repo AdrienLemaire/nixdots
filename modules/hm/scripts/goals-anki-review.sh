@@ -13,4 +13,9 @@
 # nothing at all.
 set -u
 REPO="${GOALS_REPO:-$HOME/Projects/Perso/personal-goals}"
+
+# A sweep that cannot be made safe does nothing: until the deployed
+# anki-review understands --no-launch, stay silent rather than risk
+# opening Anki unattended.
+grep -q -- '--no-launch' "$REPO/bin/anki-review" 2>/dev/null || exit 0
 exec "$REPO/bin/anki-review" --no-launch "${1:-10}"
