@@ -8,20 +8,25 @@
 # Budget: up to 30s waiting for dunst + ~12s for the fold + up to 60s for the
 # notification is comfortably under the unit's 120s TimeoutStartSec.
 set -u
-hour=$(date +%-H)
-[ "$hour" -ge 12 ] && exit 0
-# A catch-up fire at 02:00 is not a morning brief either -- Persistent=true
-# only coalesces a *missed* window, and a boot in the small hours is not one.
-[ "$hour" -lt 6 ] && exit 0
 
 # GOALS_REPO is honoured via a unit Environment= or Hyprland's env=, never via goals-open.sh, which strips the environment.
 REPO="${GOALS_REPO:-$HOME/Projects/Perso/personal-goals}"
-# Catches a skipped evening review: the fold is what keeps a self-report from
-# evaporating, so it runs before anything is shown -- regardless of whether
-# dunst is up yet.
+BIN="$HOME/.local/share/bin"
+
+# The fold is the data-safety step and needs no desktop: it runs whenever
+# this fires, and the hour guards below gate only the notification. Catches
+# a skipped evening review -- the fold is what keeps a self-report from
+# evaporating -- regardless of whether dunst is up yet or what hour it is.
 "$REPO/bin/cadence-fold" >/dev/null 2>&1 || true
 
-. "$HOME/.local/share/bin/goals-lib.sh"
+hour=$(date +%-H)
+# A catch-up fire at 02:00 is not a morning brief either -- Persistent=true
+# only coalesces a *missed* window, and a boot in the small hours is not one.
+[ "$hour" -lt 6 ] && exit 0
+[ "$hour" -ge 12 ] && exit 0
+
+# dunst starts from Hyprland's exec-once, later than timers.target.
+. "$BIN/goals-lib.sh"
 wait_for_dunst || exit 0
 
 # --action uses a comma; notify-send's = would silently send no actions at all.
@@ -37,4 +42,4 @@ choice=$(dunstify --appname=cadence --urgency=low --timeout=60000 \
   "Today's program" "Six chains and this week's three" 2>/dev/null)
 
 [ "$choice" = "default" ] || exit 0
-exec "$HOME/.local/share/bin/goals-open.sh" "$HOME/.local/share/bin/goals-today.sh"
+exec "$BIN/goals-open.sh" "$BIN/goals-today.sh"
