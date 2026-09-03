@@ -307,6 +307,24 @@ in
       mutable = true;
       executable = true;
     };
+    ".local/share/bin/goals-anki-review.sh" = {
+      source = ./scripts/goals-anki-review.sh;
+      force = true;
+      mutable = true;
+      executable = true;
+    };
+    ".local/share/bin/goals-sunday.sh" = {
+      source = ./scripts/goals-sunday.sh;
+      force = true;
+      mutable = true;
+      executable = true;
+    };
+    ".local/share/bin/goals-claude.sh" = {
+      source = ./scripts/goals-claude.sh;
+      force = true;
+      mutable = true;
+      executable = true;
+    };
     # NB: .local/lib/hyde/brightness-all.sh is NOT declared here -- it is
     # supplied by the patchedHydeLib tree above, for the same reason.
     ".local/share/bin/claude-statusline.sh" = {
