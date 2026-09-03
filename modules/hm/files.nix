@@ -48,6 +48,51 @@ let
     cp ${./scripts/brightness-all.sh} $out/brightness-all.sh
     chmod +x $out/brightness-all.sh
   '';
+  # The vendored dunst config was generated on the upstream author's Arch box
+  # (it still carries /home/khing icon paths) and shipped verbatim, so it
+  # points dmenu at /usr/bin/rofi and browser at /usr/bin/xdg-open -- neither
+  # of which exists on NixOS. Reproduced live:
+  #   dunst: CRITICAL: [invoke_dmenu:0278] Cannot spawn dmenu:
+  #     Failed to execute child process "/usr/bin/rofi" (No such file...)
+  # The notification just sits there and a left-click does nothing. HyDE's own
+  # generator (.local/share/hyde/wallbash/scripts/dunst.sh:87) writes
+  # `$(which rofi)` and would be correct if it had ever been re-run here; it
+  # has not. `dmenu` is a global-only setting and cannot be set per rule.
+  #
+  # Unlike the two trees above, hydenix declares these as *per-file* keys in
+  # its own modules/hm/notifications.nix, so lib.mkForce on the same key does
+  # override -- the silent no-op described at the top of this file does not
+  # apply here. Verified against the pinned revision before this was written.
+  #
+  # Both files are patched. dunstrc is what dunst reads; dunst.conf is what
+  # `hyde-shell wallbash dunst` splices back into a regenerated dunstrc on the
+  # next wallpaper change, so patching only dunstrc would put the [cadence]
+  # rule one wallpaper away from vanishing.
+  #
+  # printf rather than a heredoc: a heredoc inside this indented Nix string
+  # would carry its leading spaces into a dunst section header. The redirect
+  # lives inside the string, not at each call site: this indented string ends
+  # in a trailing newline, and `${cadenceRule} >> $out` would put `>> $out`
+  # on its own line -- a no-op appended after the real one, not an error, so
+  # nothing would have caught it.
+  cadenceRule = ''
+    printf '\n[cadence]\nappname = "cadence"\nhistory_ignore = true\n' >> $out
+  '';
+  patchedDunstrc = pkgs.runCommand "hyde-dunstrc" { } ''
+    cp ${pkgs.hyde}/Configs/.config/dunst/dunstrc $out
+    chmod u+w $out
+    sed -i 's|/usr/bin/rofi|${pkgs.rofi}/bin/rofi|g' $out
+    sed -i 's|/usr/bin/xdg-open|${pkgs.xdg-utils}/bin/xdg-open|g' $out
+    ${cadenceRule}
+  '';
+  patchedDunstConf = pkgs.runCommand "hyde-dunst-conf" { } ''
+    cp ${pkgs.hyde}/Configs/.config/dunst/dunst.conf $out
+    chmod u+w $out
+    # dunst.conf carries no dmenu line -- the generator writes that itself,
+    # and writes it correctly. Only browser and the rule are needed here.
+    sed -i 's|/usr/bin/xdg-open|${pkgs.xdg-utils}/bin/xdg-open|g' $out
+    ${cadenceRule}
+  '';
 in
 {
   home.file = {
@@ -85,6 +130,20 @@ in
 
     ".config/hyde/wallbash/always/tmux.dcol" = {
       source = ./home/wallbash/tmux.dcol;
+      force = true;
+      mutable = true;
+    };
+
+    # See patchedDunstrc above. mkForce overrides hydenix's own per-file
+    # entries in modules/hm/notifications.nix; `mutable = true` matches theirs,
+    # which matters because wallbash rewrites dunstrc in place.
+    ".config/dunst/dunstrc" = lib.mkForce {
+      source = patchedDunstrc;
+      force = true;
+      mutable = true;
+    };
+    ".config/dunst/dunst.conf" = lib.mkForce {
+      source = patchedDunstConf;
       force = true;
       mutable = true;
     };
