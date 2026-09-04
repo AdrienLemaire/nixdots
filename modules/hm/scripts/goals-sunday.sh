@@ -8,6 +8,9 @@
 #
 # 18:00, not 21:00: the daily evening review already fires at 21:00, and two
 # notifications three seconds apart are one notification and one annoyance.
+# The offer stays until it is answered or 21:00 arrives, when the evening
+# review takes the screen; a noon catch-up fire can wait nine hours, hence
+# the unit's 10h TimeoutStartSec.
 set -u
 [ "$(date +%u)" -eq 7 ] || exit 0
 [ "$(date +%-H)" -ge 12 ] || exit 0
@@ -20,7 +23,8 @@ wait_for_dunst || exit 0
 # This one opens Claude rather than a window: the weekly review writes markdown
 # -- mission names and due dates from enfants-missions.md, next week's three,
 # the Sunday section -- which is the part a GUI cannot sensibly do.
-choice=$(dunstify --appname=cadence --urgency=low --timeout=60000 \
+timeout=$(ms_until 21:00) || exit 0
+choice=$(dunstify --appname=cadence --urgency=low --timeout="$timeout" \
   --hint=string:x-dunst-stack-tag:cadence-sunday \
   --action="default,Open" \
   "Weekly review" "Ten minutes, when you have them" 2>/dev/null)

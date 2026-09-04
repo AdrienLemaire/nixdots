@@ -5,8 +5,9 @@
 # the laptop at 22:00 would otherwise deliver a morning brief at bedtime. The
 # hour check is the guard: after noon, a morning brief is not a morning brief.
 # %-H, not %H: an unpadded hour, because 08 is not a valid octal number.
-# Budget: up to 30s waiting for dunst + ~12s for the fold + up to 60s for the
-# notification is comfortably under the unit's 120s TimeoutStartSec.
+# Budget: up to 30s waiting for dunst + ~12s for the fold + the notification,
+# which stays until it is answered or 12:00 arrives -- under the unit's 5h
+# TimeoutStartSec from the earliest fire that passes the hour guard.
 set -u
 
 # GOALS_REPO is honoured via a unit Environment= or Hyprland's env=, never via goals-open.sh, which strips the environment.
@@ -36,7 +37,8 @@ wait_for_dunst || exit 0
 # The stack tag makes each cadence notification replace the previous one.
 # The process must block: dunst has no on-click exec, so blocking on dunstify
 # and dispatching on stdout is the only way a click can reach us.
-choice=$(dunstify --appname=cadence --urgency=low --timeout=60000 \
+timeout=$(ms_until 12:00) || exit 0
+choice=$(dunstify --appname=cadence --urgency=low --timeout="$timeout" \
   --hint=string:x-dunst-stack-tag:cadence-morning \
   --action="default,Open" \
   "Today's program" "Six chains and this week's three" 2>/dev/null)

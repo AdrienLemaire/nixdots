@@ -29,3 +29,17 @@ wait_for_dunst() {
   done
   return 1
 }
+
+# ms_until HH:MM: print the milliseconds from now until that clock time today,
+# for dunstify --timeout. An offer stays on screen until it is answered or its
+# window ends -- a fixed 60s expired unseen twice on 2026-09-03/04 -- and a
+# deadline the notification carries itself means a unit that is killed or
+# times out never leaves an orphan toast behind. Returns 1 when the time has
+# already passed, so the caller can skip posting at all.
+ms_until() {
+  local now target
+  now=$(date +%s)
+  target=$(date -d "today $1" +%s 2>/dev/null) || return 1
+  [ "$target" -gt "$now" ] || return 1
+  printf '%d\n' $(( (target - now) * 1000 ))
+}

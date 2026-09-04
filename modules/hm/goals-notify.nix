@@ -23,16 +23,18 @@
 # Suspend/resume needs no Persistent -- the user manager survives sleep and
 # fires on resume.
 let
-  notifier = name: description: calendar: {
+  notifier = name: description: calendar: timeout: {
     services.${name} = {
       Unit.Description = description;
       Service = {
         Type = "oneshot";
         # dunstify blocks until the notification is answered or expires -- the
         # only way dunst 1.13.2 can report a click. Bound it so a wedged dunst
-        # cannot pin the unit open. It also covers the notification-bus wait
-        # (30s) and anki-review's wait for Anki to come up (25s).
-        TimeoutStartSec = "120s";
+        # cannot pin the unit open. The three offers (morning, evening,
+        # Sunday) carry a deadline in the notification itself and may wait
+        # hours; the nudge and Anki units need only the notification-bus wait
+        # (30s) plus anki-review's wait for Anki to come up (25s).
+        TimeoutStartSec = timeout;
         ExecStart = "%h/.local/share/bin/${name}.sh";
       };
     };
@@ -49,13 +51,13 @@ let
   # OnCalendar takes a list in home-manager, and one string covers a whole
   # family of windows: "09,13,17:00" normalises to *-*-* 09,13,17:00:00.
   units = [
-    (notifier "goals-morning" "Cadence morning program (08:00)" "08:00")
+    (notifier "goals-morning" "Cadence morning program (08:00)" "08:00" "5h")
     (notifier "goals-nudge"
-      "Cadence nudge windows (09:00/13:00/17:00)" "09,13,17:00")
+      "Cadence nudge windows (09:00/13:00/17:00)" "09,13,17:00" "120s")
     (notifier "goals-anki-review"
-      "Anki backlog sweep (2-hourly, 09:00-17:00)" "09,11,13,15,17:00")
-    (notifier "goals-evening" "Cadence evening review (21:00)" "21:00")
-    (notifier "goals-sunday" "Cadence weekly review (Sun 18:00)" "Sun 18:00")
+      "Anki backlog sweep (2-hourly, 09:00-17:00)" "09,11,13,15,17:00" "120s")
+    (notifier "goals-evening" "Cadence evening review (21:00)" "21:00" "5h")
+    (notifier "goals-sunday" "Cadence weekly review (Sun 18:00)" "Sun 18:00" "10h")
   ];
   merge = attr: lib.foldl' (acc: unit: acc // unit.${attr}) { } units;
 in
