@@ -42,6 +42,18 @@ let
     # poll: "custom/cpuinfo: Error parsing JSON: Control character in string"
     # -- 3436 of them in one hour on 2026-08-30. Escape the tab like the newline.
     sed -i 's/join("\\\\n\\t")/join("\\\\n\\\\t")/' $out/cpuinfo.sh
+    # emoji-picker.sh runs rofi with `-matching fuzzy`, so a query matches any
+    # entry containing those letters as a subsequence, in order but with any
+    # gaps: "cat" pulls in "graduation cap", "flag: Cape Verde", "cactus"...
+    # The whole emoji.db is ~1800 short lines, so nearly every query returns
+    # junk ahead of the literal match. `normal` matches each whitespace-
+    # separated token as a plain substring, which is what a picker wants. The
+    # flag is set rather than dropped so an upstream default change cannot
+    # quietly reinstate fuzzy; emoji-picker.sh repeats it in all four of its
+    # rofi invocations (the --rasi branch plus the three styles), hence the /g.
+    # glyph-picker.sh (mod+period) is the same picker over the Nerd Font glyph
+    # names and carries the same flag on its single rofi call.
+    sed -i 's/-matching fuzzy/-matching normal/g' $out/emoji-picker.sh $out/glyph-picker.sh
     # Installed next to HyDE's own scripts so keybindings.conf can reach it via
     # $scrPath, the same way every other bind in that file does. It has to go in
     # the tree rather than its own home.file entry for the reason above.
