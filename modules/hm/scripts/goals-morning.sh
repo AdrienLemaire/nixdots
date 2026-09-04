@@ -5,9 +5,10 @@
 # the laptop at 22:00 would otherwise deliver a morning brief at bedtime. The
 # hour check is the guard: after noon, a morning brief is not a morning brief.
 # %-H, not %H: an unpadded hour, because 08 is not a valid octal number.
-# Budget: up to 30s waiting for dunst + ~12s for the fold + the notification,
-# which stays until it is answered or 12:00 arrives -- under the unit's 5h
-# TimeoutStartSec from the earliest fire that passes the hour guard.
+# Budget: up to 30s waiting for dunst + ~12s for the fold + ~10s for the
+# brief (it re-reads the sources) + the notification, which stays until it
+# is answered or 12:00 arrives -- under the unit's 5h TimeoutStartSec from
+# the earliest fire that passes the hour guard.
 set -u
 
 # GOALS_REPO is honoured via a unit Environment= or Hyprland's env=, never via goals-open.sh, which strips the environment.
@@ -38,10 +39,17 @@ wait_for_dunst || exit 0
 # The process must block: dunst has no on-click exec, so blocking on dunstify
 # and dispatching on stdout is the only way a click can reach us.
 timeout=$(ms_until 12:00) || exit 0
+# The body is the two-line morning brief -- what the day holds, then the
+# sentence the evening session wrote for it -- printed by `cadence brief`
+# so this script holds no goal logic. $(...) drops the trailing newline and
+# keeps the one between the lines; dunst renders it. Nothing printed, or a
+# failed command, falls back to the fixed body the brief replaced.
+body=$("$REPO/bin/cadence" brief 2>/dev/null) || body=""
+[ -n "$body" ] || body="Six chains and this week's three"
 choice=$(dunstify --appname=cadence --urgency=low --timeout="$timeout" \
   --hint=string:x-dunst-stack-tag:cadence-morning \
   --action="default,Open" \
-  "Today's program" "Six chains and this week's three" 2>/dev/null)
+  "Today's program" "$body" 2>/dev/null)
 
 [ "$choice" = "default" ] || exit 0
 exec "$BIN/goals-open.sh" "$BIN/goals-today.sh"
