@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
   # hydenix links HyDE's config trees with `recursive = true` *directory* entries
   # (home.file.".local/share/hypr/" in its hyprland module, ".local/lib/hyde" in
@@ -66,10 +66,12 @@ let
   # of which exists on NixOS. Reproduced live:
   #   dunst: CRITICAL: [invoke_dmenu:0278] Cannot spawn dmenu:
   #     Failed to execute child process "/usr/bin/rofi" (No such file...)
-  # The notification just sits there and a left-click does nothing. HyDE's own
-  # generator (.local/share/hyde/wallbash/scripts/dunst.sh:87) writes
-  # `$(which rofi)` and would be correct if it had ever been re-run here; it
-  # has not. `dmenu` is a global-only setting and cannot be set per rule.
+  # The notification just sits there and a left-click does nothing. `dmenu` is
+  # a global-only setting and cannot be set per rule.
+  #
+  # This patch only covers the file as first deployed. HyDE's generator
+  # rewrites dunstrc at every login -- see patchedWallbash below, which is
+  # what keeps the dmenu line correct afterwards.
   #
   # Unlike the two trees above, hydenix declares these as *per-file* keys in
   # its own modules/hm/notifications.nix, so lib.mkForce on the same key does
@@ -101,13 +103,92 @@ let
     cp ${pkgs.hyde}/Configs/.config/dunst/dunst.conf $out
     chmod u+w $out
     # dunst.conf carries no dmenu line -- the generator writes that itself,
-    # and writes it correctly. Only browser and the rule are needed here.
+    # correctly once patched (see patchedWallbash). Only browser and the rule
+    # are needed here.
     sed -i 's|/usr/bin/xdg-open|${pkgs.xdg-utils}/bin/xdg-open|g' $out
     ${cadenceRule}
   '';
+  # HyDE's wallbash generator for dunstrc (wallbash/scripts/dunst.sh) writes
+  # `dmenu = $(which rofi) -config notification -dmenu -p dunst:`. It re-runs
+  # at every login: home-manager's setTheme activation step (upstream hydenix
+  # theme.nix) runs theme.switch -> wallpaper -> color.set -> wallbash inside
+  # nixos-activation.service, whose PATH is that step's own tool list plus
+  # coreutils -- `which` is in it, rofi is not. `$(which rofi)` expands to
+  # nothing and the live file reads `dmenu =  -config notification ...`, so
+  # every left-click logs
+  #   dunst: CRITICAL: [invoke_dmenu:0278] Cannot spawn dmenu:
+  #     Failed to execute child process "-config" (No such file or directory)
+  # and no action menu appears. Seen 2026-09-05: rebuild 10:50, dunstrc
+  # regenerated 10:52:12, dunst up 10:53:38. patchedDunstrc above is
+  # overwritten within seconds of activation, so the store path has to be
+  # baked into the generator itself. Same directory-source override as the
+  # trees above: hydenix links ".local/share/wallbash/" as one recursive,
+  # mutable entry in its hyde module. The grep fails the build if upstream
+  # rewrites the line, rather than letting the patch go quietly dead again.
+  patchedWallbash = pkgs.runCommand "hyde-wallbash" { } ''
+    cp -r ${pkgs.hyde}/Configs/.local/share/wallbash $out
+    chmod -R u+w $out
+    sed -i 's|$(which rofi)|${pkgs.rofi}/bin/rofi|g' $out/scripts/dunst.sh
+    grep -q '^dmenu = ${pkgs.rofi}/bin/rofi -config' $out/scripts/dunst.sh
+  '';
+
+  # Upstream hydenix (theme.nix) applies the theme twice: the activation step
+  # above, at every home-manager activation, and two systemd user units,
+  # setTheme.service and setThemeDconf.service, at every graphical session.
+  # The units are what this fixes; patchedWallbash is what fixes the dunstrc,
+  # since the activation step cannot be given a PATH from here.
+  #
+  # Upstream gives both units a `Path = [ ... ]` list. That is not a systemd
+  # key: every login logs
+  #   setTheme.service:7: Unknown key 'Path' in section [Service], ignoring.
+  # sixteen times over, and the units run on the user manager's PATH by luck.
+  # setTheme's ExecStart also ends in `|| true`, which systemd hands to
+  # theme.switch.sh as two literal arguments -- ExecStart is not a shell. Both
+  # are replaced by a wrapper that puts the intended tool list, plus the rofi
+  # the dunstrc generator needs, in front of the inherited PATH and then runs
+  # the command as written -- so setTheme's `|| true` now means what upstream
+  # meant, and setThemeDconf keeps failing loudly as it does upstream. Only
+  # the Service keys are forced; the Unit and Install sections stay upstream's.
+  themeTools = with pkgs; [
+    swww
+    killall
+    hyprland
+    dunst
+    libnotify
+    systemd
+    waybar
+    kitty
+    gawk
+    coreutils
+    parallel
+    imagemagick
+    which
+    util-linux
+    dconf
+    rofi
+  ];
+  themeService = name: command: {
+    Path = lib.mkForce [ ];
+    ExecStart = lib.mkForce (toString (pkgs.writeShellScript name ''
+      export PATH="${lib.makeBinPath themeTools}:${config.home.homeDirectory}/.local/bin:$PATH"
+      ${config.home.homeDirectory}/.local/lib/hyde/${command}
+    ''));
+  };
 in
 {
+  systemd.user.services.setTheme.Service = themeService "hyde-set-theme"
+    ''theme.switch.sh -s "${config.hydenix.hm.theme.active}" || true'';
+  systemd.user.services.setThemeDconf.Service = themeService "hyde-set-theme-dconf"
+    "dconf.set.sh";
+
   home.file = {
+    # See patchedWallbash above.
+    ".local/share/wallbash/" = lib.mkForce {
+      source = patchedWallbash;
+      recursive = true;
+      force = true;
+      mutable = true;
+    };
     ".local/share/hypr/" = lib.mkForce {
       source = patchedHyprConfigs;
       recursive = true;
