@@ -330,6 +330,11 @@ in
       force = true;
       mutable = true;
     };
+    ".local/share/bin/logoutlaunch.sh" = {
+      source = ./scripts/logoutlaunch.sh;
+      force = true;
+      mutable = true;
+    };
     ".local/share/bin/gif-frame.sh" = {
       source = ./scripts/gif-frame.sh;
       force = true;
