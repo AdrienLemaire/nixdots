@@ -15,9 +15,11 @@ icon_border=$((elem_border - 5))
 
 #// scale for monitor
 
-mon_x_res=$(hyprctl -j monitors | jq '.[] | select(.focused==true) | .width')
-mon_scale=$(hyprctl -j monitors | jq '.[] | select(.focused==true) | .scale' | sed "s/\.//")
-mon_x_res=$((mon_x_res * 100 / mon_scale))
+# Upstream divided by the scale with a `sed "s/\.//"` on the raw value, which only
+# works while Hyprland prints two decimals: "1.50" -> 150 -> width * 100 / 150.
+# 0.56 prints "1", so that became width * 100 / 1 and col_count blew up to
+# 333, leaving the selector an empty overlay. jq does the division itself.
+mon_x_res=$(hyprctl -j monitors | jq '.[] | select(.focused==true) | (.width / .scale) | floor')
 
 #// generate config
 
