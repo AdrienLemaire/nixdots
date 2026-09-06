@@ -2,14 +2,14 @@
   services.pipewire = {
     enable = true;
     audio.enable = true;  # RTKit for real-time priority (reduces crackles on XPS)
-    package = inputs.older-pipewire.legacyPackages.${pkgs.system}.pipewire;
+    package = inputs.older-pipewire.legacyPackages.${pkgs.stdenv.hostPlatform.system}.pipewire;
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
     jack.enable = true;
     wireplumber = {
       enable = true;
-      package = inputs.older-pipewire.legacyPackages.${pkgs.system}.wireplumber;
+      package = inputs.older-pipewire.legacyPackages.${pkgs.stdenv.hostPlatform.system}.wireplumber;
       extraConfig = {
         # Early: Restrict Maono card to input-only (no output sink created via ALSA profile)
         "10-maono-alsa" = {

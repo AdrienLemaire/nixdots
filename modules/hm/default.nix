@@ -9,7 +9,6 @@
     ./goals-window.nix
     ./hypr-reload.nix
     ./hypridle-recycle.nix
-    ./swww-compat.nix
     ./tmux.nix
     ./common
   ];
@@ -17,6 +16,16 @@
   home.packages = [
     pkgs.nu_scripts
   ];
+
+  # Newer home-manager flipped this default from true to false, and warns while
+  # home.stateVersion (25.05, set by hydenix) is below 26.05 and so still gets
+  # the legacy true. Taking the new default is the no-op here: hydenix's own
+  # xdg.nix already exports every XDG_*_DIR in home.sessionVariables with
+  # identical values. The only thing `true` would add is XDG_PROJECTS_DIR, from
+  # the `projects` user dir that newer home-manager introduced -- a variable
+  # this session never had. So false reproduces the current environment
+  # exactly; true would not. Verified by diffing home.sessionVariables both ways.
+  xdg.userDirs.setSessionVariables = false;
 
   programs.neovim.plugins = [
     pkgs.vimPlugins.nvim-tree-lua

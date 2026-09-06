@@ -1,7 +1,7 @@
 { inputs, pkgs, ... }:
 {
   imports = [
-    inputs.hydenix.inputs.home-manager.nixosModules.home-manager
+    inputs.home-manager.nixosModules.home-manager
     inputs.hydenix.nixosModules.default
     ../modules/system
     ./hardware-configuration.nix
