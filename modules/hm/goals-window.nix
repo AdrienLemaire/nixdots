@@ -18,7 +18,8 @@ let
     graphene
     harfbuzz
   ]));
-  python = pkgs.python3.withPackages (ps: [ ps.pygobject3 ]);
+  # garminconnect: cadence/garmin.py reads Garmin Connect through this interpreter.
+  python = pkgs.python3.withPackages (ps: [ ps.pygobject3 ps.garminconnect ]);
 in
 {
   home.packages = [
