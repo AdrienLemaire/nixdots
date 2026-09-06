@@ -8,6 +8,7 @@
     ./goals-notify.nix
     ./goals-window.nix
     ./hypr-reload.nix
+    ./hyprland-session.nix
     ./hypridle-recycle.nix
     ./tmux.nix
     ./common
@@ -130,6 +131,26 @@
         # left by a previous session; restart rather than start discards any
         # instance that outlived the last compositor, which Linger=yes allows.
         exec-once = systemctl --user reset-failed fcitx5.service ; systemctl --user restart fcitx5.service
+
+        # Nothing else activates graphical-session.target here (SDDM runs a plain
+        # session script, not uwsm), and xdg-desktop-portal 1.22 refuses to start
+        # without it -- see modules/hm/hyprland-session.nix. The environment is
+        # re-exported on this line rather than relying on HyDE's own
+        # dbus-update-activation-environment exec-once, because exec-once entries
+        # are fired in order but not awaited. XDG_SESSION_DESKTOP is in that list
+        # because HyDE's waybar.py names its unit hyde-$XDG_SESSION_DESKTOP-bar
+        # and dedupes by asking systemd whether that exact unit is active; without
+        # the variable setTheme.service starts a second bar called
+        # hyde-unknown-bar instead of reusing the compositor's.
+        #
+        # Stopped on shutdown so the lingering user manager does not carry a dead
+        # compositor's session into the next login. Shutdown stops
+        # graphical-session.target rather than hyprland-session.target: PartOf
+        # propagates from the session target, so that one line also tears down the
+        # portals and every app2unit-launched HyDE daemon, and hyprland-session
+        # follows through its BindsTo.
+        exec-once = dbus-update-activation-environment --systemd WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP && systemctl --user start hyprland-session.target
+        exec-shutdown = systemctl --user stop graphical-session.target
         exec-once = [workspace 2 silent] firefox
         exec-once = [workspace 1 silent] ghostty
       '';
