@@ -54,6 +54,31 @@ let
     # glyph-picker.sh (mod+period) is the same picker over the Nerd Font glyph
     # names and carries the same flag on its single rofi call.
     sed -i 's/-matching fuzzy/-matching normal/g' $out/emoji-picker.sh $out/glyph-picker.sh
+    # Every HyDE menu that sizes itself against the focused monitor turns the
+    # scale into a "percent" divisor by deleting the decimal point: "1.50" -> 150,
+    # then `width * 100 / 150`. Hyprland 0.56 prints `"scale": 1` for integer
+    # scales, so the dot-strip is a no-op, the divisor is 1 instead of 100, and
+    # every derived pixel value comes out 100x too large. Seen as: the theme
+    # selector laying out 333 columns and rendering an empty overlay, and
+    # ctrl+alt+del's wlogout asking for 30240px button margins, which GDK refuses
+    # ("Unable to create Cairo image surface: invalid value (typically too big)")
+    # so nothing clickable is drawn. get_rofi_pos in globalcontrol.sh is the same
+    # bug and mispositions every rofi popup that spawns at the cursor.
+    #
+    # Fixed at the source of the number: jq multiplies by 100 itself. The
+    # dot-stripping downstream survives as a no-op on an already-integer value,
+    # which is why it does not need removing too. wbarstylegen.sh is untouched --
+    # upstream already writes `(.height / .scale)` there.
+    sed -i "s#| \.scale'#| (.scale * 100 | round)'#" \
+      $out/theme.select.sh $out/rofiselect.sh $out/wallpaper.sh $out/logoutlaunch.sh
+    sed -i 's#\\(\.scale)#\\(.scale * 100 | round)#' $out/gamelauncher.sh $out/globalcontrol.sh
+    sed -i 's#,\.scale,#,(.scale * 100 | round),#' $out/quickapps.sh
+    # Fail the build rather than ship a silently unpatched menu if HyDE ever
+    # rewrites one of these lines.
+    for f in theme.select.sh rofiselect.sh wallpaper.sh logoutlaunch.sh \
+      gamelauncher.sh globalcontrol.sh quickapps.sh; do
+      grep -q 'scale \* 100' $out/$f || { echo "monitor-scale patch missed $f"; exit 1; }
+    done
     # Installed next to HyDE's own scripts so keybindings.conf can reach it via
     # $scrPath, the same way every other bind in that file does. It has to go in
     # the tree rather than its own home.file entry for the reason above.
@@ -322,16 +347,6 @@ in
 
     ".local/share/bin/toggle_show_desktop.sh" = {
       source = ./scripts/toggle_show_desktop.sh;
-      force = true;
-      mutable = true;
-    };
-    ".local/share/bin/themeselect.sh" = {
-      source = ./scripts/themeselect.sh;
-      force = true;
-      mutable = true;
-    };
-    ".local/share/bin/logoutlaunch.sh" = {
-      source = ./scripts/logoutlaunch.sh;
       force = true;
       mutable = true;
     };
