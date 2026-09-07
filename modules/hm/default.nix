@@ -10,6 +10,7 @@
     ./hypr-reload.nix
     ./hyprland-session.nix
     ./hypridle-recycle.nix
+    ./theme-activation-env.nix
     ./tmux.nix
     ./common
   ];
@@ -137,11 +138,13 @@
         # without it -- see modules/hm/hyprland-session.nix. The environment is
         # re-exported on this line rather than relying on HyDE's own
         # dbus-update-activation-environment exec-once, because exec-once entries
-        # are fired in order but not awaited. XDG_SESSION_DESKTOP is in that list
-        # because HyDE's waybar.py names its unit hyde-$XDG_SESSION_DESKTOP-bar
-        # and dedupes by asking systemd whether that exact unit is active; without
-        # the variable setTheme.service starts a second bar called
-        # hyde-unknown-bar instead of reusing the compositor's.
+        # are fired in order but not awaited. XDG_SESSION_DESKTOP is in the list
+        # because setTheme.service comes up with this target and reaches HyDE's
+        # waybar.py, which names its unit hyde-$XDG_SESSION_DESKTOP-bar and
+        # dedupes on that exact name -- if HyDE's own `--all` export has not
+        # landed yet, that unit is hyde-unknown-bar and a second waybar starts.
+        # The duplicate bars actually observed came from the activation snippet
+        # instead, which needs its own fix; see ./theme-activation-env.nix.
         #
         # Stopped on shutdown so the lingering user manager does not carry a dead
         # compositor's session into the next login. Shutdown stops
