@@ -10,6 +10,7 @@
     ./display.nix
     ./swww-compat.nix
     ./bibata-cursor.nix
+    ./safeeyes-croniter.nix
   ];
   # ./networking.nix  # for sunshine & android moonlight laptop/phone connection
   # # ./dell-xps-13-9320.nix 
