@@ -117,11 +117,24 @@ let
   cadenceRule = ''
     printf '\n[cadence]\nappname = "cadence"\nhistory_ignore = true\n' >> $out
   '';
+  # HyDE ships `mouse_left_click = context, close_current`, so opening the
+  # action menu also *closes* the notification -- and dunstify then prints
+  # close reason 2, "dismissed by the user", to the script still waiting on
+  # it. Reaching for Snooze therefore spent one of the day's two dismissals
+  # and threw the answer away. `context` alone leaves the notification up
+  # until the menu is answered, which is what the menu is for.
+  # The grep fails the build if upstream rewords the line, rather than letting
+  # the patch go quietly dead the way the dmenu one did.
+  leftClickRule = ''
+    sed -i 's|^mouse_left_click = context, close_current$|mouse_left_click = context|' $out
+    grep -q '^mouse_left_click = context$' $out
+  '';
   patchedDunstrc = pkgs.runCommand "hyde-dunstrc" { } ''
     cp ${pkgs.hyde}/Configs/.config/dunst/dunstrc $out
     chmod u+w $out
     sed -i 's|/usr/bin/rofi|${pkgs.rofi}/bin/rofi|g' $out
     sed -i 's|/usr/bin/xdg-open|${pkgs.xdg-utils}/bin/xdg-open|g' $out
+    ${leftClickRule}
     ${cadenceRule}
   '';
   patchedDunstConf = pkgs.runCommand "hyde-dunst-conf" { } ''
@@ -131,6 +144,7 @@ let
     # correctly once patched (see patchedWallbash). Only browser and the rule
     # are needed here.
     sed -i 's|/usr/bin/xdg-open|${pkgs.xdg-utils}/bin/xdg-open|g' $out
+    ${leftClickRule}
     ${cadenceRule}
   '';
   # HyDE's wallbash generator for dunstrc (wallbash/scripts/dunst.sh) writes

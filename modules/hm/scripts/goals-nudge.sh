@@ -39,9 +39,9 @@ fi
 # --action uses a comma; notify-send's = would silently send the notification
 # with no actions at all. `default` fires on middle-click, which is the only
 # path dunst 1.13.2 offers with certainty -- the left-click menu needs the
-# dmenu fix in Task 4. Never name an action with a digit: on expiry dunstify
-# prints the numeric close reason on this same stdout, which is exactly what
-# the fallthrough below reads as "unanswered".
+# dmenu fix in Task 4. Never name an action with a digit: when no action is
+# chosen dunstify prints the numeric close reason on this same stdout, and
+# the case below tells the two apart by name.
 # The stack tag makes each nudge replace the previous one, so three windows
 # can never pile into three notifications.
 # The process must block: dunst has no on-click exec, and `script =` fires on
@@ -52,14 +52,22 @@ choice=$(dunstify --appname=cadence --urgency=low --timeout=30000 \
   "$summary" "$body" 2>/dev/null)
 rc=$?
 
-# An empty choice means "expired unanswered" only when dunstify actually ran
-# the notification. dunst dying mid-wait, or dunstify itself failing to
-# launch, also leaves $choice empty but with a non-zero rc -- that is a
-# notification nobody ever saw, not one that was dismissed, so it must not
-# count against the dismissal cap.
+# With no action chosen, dunstify prints the close reason as a number:
+#   1  expired    -- the 30 seconds ran out; nobody was at the screen
+#   2  dismissed  -- the owner closed it
+#   3  closed     -- a CloseNotification call: dunstctl, the stack tag being
+#                    reused by the next nudge, the session ending
+# Only 2 is an answer. Counting 1 and 3 as dismissals is what spent the day's
+# cap by 13:00 every day from 3 Sep: two windows nobody was in front of ended
+# the day. 1 and 3 do nothing at all -- the goal is already in `nudged`, so
+# the rotation moves on to the next one at the next window either way.
+#
+# rc is still checked on the path that counts: dunst dying mid-wait, or
+# dunstify failing to launch, prints nothing and is not a dismissal either.
 case "$choice" in
   default) "$REPO/bin/cadence-record" "$id" ;;
   snooze)  "$REPO/bin/cadence-record" "$id" snooze ;;
-  *)       [ "$rc" -eq 0 ] && "$REPO/bin/cadence-nudge" --dismissed ;;
+  2)       [ "$rc" -eq 0 ] && "$REPO/bin/cadence-nudge" --dismissed ;;
+  *)       : ;;
 esac
 exit 0
