@@ -5,10 +5,12 @@
 # the laptop at 22:00 would otherwise deliver a morning brief at bedtime. The
 # hour check is the guard: after noon, a morning brief is not a morning brief.
 # %-H, not %H: an unpadded hour, because 08 is not a valid octal number.
-# Budget: up to 30s waiting for dunst + ~12s for the fold + ~10s for the
-# brief (it re-reads the sources) + the notification, which stays until it
-# is answered or 12:00 arrives -- under the unit's 5h TimeoutStartSec from
-# the earliest fire that passes the hour guard.
+# Budget: up to 30s waiting for dunst + the fold + ~10s for the brief (it
+# re-reads the sources) + the notification, which stays until it is answered
+# or 12:00 arrives -- under the unit's 5h TimeoutStartSec from the earliest
+# fire that passes the hour guard. The fold is ~12s of buffer folding plus
+# one Milanote board render (about 15-25s of headless Chrome, once per run
+# however many days it records) plus a few seconds per captured day.
 set -u
 
 # GOALS_REPO is honoured via a unit Environment= or Hyprland's env=, never via goals-open.sh, which strips the environment.
@@ -19,7 +21,10 @@ BIN="$HOME/.local/share/bin"
 # this fires, and the hour guards below gate only the notification. Catches
 # a skipped evening review -- the fold is what keeps a self-report from
 # evaporating -- regardless of whether dunst is up yet or what hour it is.
-"$REPO/bin/cadence-fold" >/dev/null 2>&1 || true
+# Its stderr is the only account of a fetch or a capture that failed, so it
+# is kept rather than discarded; the log is appended to, never rotated here.
+mkdir -p "$HOME/.local/state/cadence"
+"$REPO/bin/cadence-fold" >>"$HOME/.local/state/cadence/fold.log" 2>&1 || true
 
 hour=$(date +%-H)
 # A catch-up fire at 02:00 is not a morning brief either -- Persistent=true
