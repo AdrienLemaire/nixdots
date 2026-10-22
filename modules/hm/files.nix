@@ -206,6 +206,23 @@ let
     dconf
     rofi
   ];
+  # hyde-shell's logout (wlogout's Logout button) runs `uwsm stop` whenever
+  # `uwsm check is-active` succeeds, and that check only looks at
+  # graphical-session.target -- which modules/hm/default.nix starts by hand for
+  # the portals. SDDM launches start-hyprland directly, not through uwsm, so
+  # `uwsm stop` prints "Compositor is not running." and the session stays up.
+  # Drop the uwsm branch so it falls through to `hyprctl dispatch exit`.
+  # hyde-shell derives LIB_DIR/SHARE_DIR from its own path (bin/../lib), so the
+  # copy keeps HyDE's .local layout with lib and share linked back to pkgs.hyde.
+  patchedHydeShell = pkgs.runCommand "hyde-shell" { } ''
+    mkdir -p $out/bin
+    ln -s ${pkgs.hyde}/Configs/.local/lib $out/lib
+    ln -s ${pkgs.hyde}/Configs/.local/share $out/share
+    sed '/^hyde-logout() {/,/^}/s/if uwsm check is-active; then/if false; then/' \
+      ${pkgs.hyde}/Configs/.local/bin/hyde-shell > $out/bin/hyde-shell
+    chmod +x $out/bin/hyde-shell
+    grep -q 'if false; then' $out/bin/hyde-shell || { echo "hyde-logout patch missed"; exit 1; }
+  '';
   themeService = name: command: {
     Path = lib.mkForce [ ];
     ExecStart = lib.mkForce (toString (pkgs.writeShellScript name ''
@@ -237,6 +254,15 @@ in
       recursive = true;
       executable = true;
       force = true;
+    };
+    # See patchedHydeShell above. hydenix's wrapper is a per-file key, so
+    # mkForce replaces it; this keeps its PYTHONPATH export.
+    ".local/bin/hyde-shell" = lib.mkForce {
+      source = pkgs.writeShellScript "hyde-shell" ''
+        export PYTHONPATH="${pkgs.python-pyamdgpuinfo}/${pkgs.python3.sitePackages}:$PYTHONPATH"
+        exec ${pkgs.bashInteractive}/bin/bash ${patchedHydeShell}/bin/hyde-shell "$@"
+      '';
+      executable = true;
     };
     ".config/fcitx5/profile" = {
       source = ./home/fcitx5/profile;
