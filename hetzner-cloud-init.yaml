@@ -1,7 +1,9 @@
 #cloud-config
 # Self-configuration for the Hetzner CX53 dev box.
 # Brings up: Nix (for the md-atlas flake), Node 22 + pnpm, Claude Code CLI,
-# tmux, mosh — and starts a persistent tmux session named "main" ready to run claude.
+# tmux (config and plugins as on the live box), mosh, zsh with the claudeA/claudeF
+# wrappers — and starts a persistent tmux session named "main" ready to run claude.
+# Claude credentials stay manual: each account logs in on its first run.
 # Runs once on first boot as root.
 
 package_update: true
@@ -16,6 +18,9 @@ packages:
   - ca-certificates
   - xz-utils
   - htop
+  - zsh
+  - fzf
+  - python3
 
 write_files:
   # A login-time helper so `tmux attach` lands you in a ready session.
@@ -42,17 +47,24 @@ write_files:
       [Service]
       Type=oneshot
       RemainAfterExit=yes
+      # systemd sets neither for a system unit; panes and plugins inherit them from the
+      # tmux server, and tmux-which-key refuses to load without HOME.
+      Environment=HOME=/root
+      EnvironmentFile=-/etc/default/locale
       ExecStart=/bin/sh -c '/usr/bin/tmux has-session -t main 2>/dev/null || /usr/bin/tmux new-session -d -s main'
       ExecStop=/usr/bin/tmux kill-session -t main
 
       [Install]
       WantedBy=multi-user.target
 
-  # Remote tmux config: distinct prefix (C-a) + loud red HETZNER bar so a session
-  # nested inside the laptop's local tmux (prefix C-b) never collides.
+  # Remote tmux config, copied from the live box: distinct prefix (C-a) + loud red
+  # HETZNER bar so a session nested inside the laptop's local tmux (prefix C-b)
+  # never collides. Its plugins are cloned in runcmd, before the session starts.
   - path: /root/.tmux.conf
     permissions: "0644"
     content: |
+      # Remote Hetzner dev box tmux — deliberately distinct from the laptop's local
+      # tmux (local prefix C-b) so a nested session never collides on keys or looks.
       set -g prefix C-a
       unbind C-b
       bind C-a send-prefix
@@ -65,17 +77,234 @@ write_files:
       set -g default-terminal "tmux-256color"
       set -ga terminal-overrides ",*256col*:Tc,xterm-ghostty:Tc"
       set -sg escape-time 10
+      set -g focus-events on
       bind '"' split-window -v -c "#{pane_current_path}"
       bind % split-window -h -c "#{pane_current_path}"
       bind c new-window -c "#{pane_current_path}"
+      # Loud REMOTE marker: red bar + cloud label (laptop bar is purple Mocha).
       set -g status on
       set -g status-style "bg=colour52,fg=colour231"
       set -g status-left "#[bg=colour196,fg=colour231,bold] HETZNER #[bg=colour52,fg=colour231] #S "
-      set -g status-left-length 28
-      set -g window-status-current-format "#[bg=colour88,fg=colour231,bold] #I:#W "
-      set -g window-status-format " #I:#W "
-      set -g status-right "#[fg=colour231]#H  %Y-%m-%d %H:%M "
-      set -g status-right-length 40
+      set -g status-left-length 40
+      # @claude_pane_status is a per-pane flag set by Claude Code hooks (~/.claude/tmux-status.sh):
+      # 🟡 working · 🟢 waiting for you · 🔴 needs input. @claude_circle shows a window's most urgent.
+      # Label rules mirror the laptop (hydenix modules/hm/tmux.nix): a renamed window
+      # keeps its name; an unnamed Claude window shows the task, icon stripped.
+      set -g @claude_circle '#{?#{m:*🔴*,#{P:#{@claude_pane_status}}},🔴 ,#{?#{m:*🟡*,#{P:#{@claude_pane_status}}},🟡 ,#{?#{m:*🟢*,#{P:#{@claude_pane_status}}},🟢 ,}}}'
+      set -g @window_label '#{E:@claude_circle}#{?#{&&:#{automatic-rename},#{m/r:^[^ -~],#{pane_title}}},#{=20;s/^[^ -~]+ //:pane_title},#W}'
+      set -g set-titles on
+      set -g set-titles-string "#S:#I #{E:@window_label}"
+      # Same layout as the laptop; only colours and the HETZNER label differ.
+      set -g window-status-format " #I #{?#{@claude_acct},#{?#{==:#{@claude_acct},A},#[fg=green],#[fg=magenta]}#{@claude_acct}#[default] ,}#{E:@window_label} "
+      set -g window-status-current-format "#[bg=colour88,fg=colour231,bold] #I #{?#{@claude_acct},#{@claude_acct} ,}#{E:@window_label} #[default]"
+      set -g window-status-separator ""
+      set -g status-right "#[fg=colour224] %Y-%m-%d #[bg=colour196,fg=colour231,bold] %H:%M "
+      set -g status-right-length 60
+      set -g pane-border-style "fg=colour52"
+      set -g pane-active-border-style "fg=colour196"
+      set -g message-style "bg=colour196,fg=colour231"
+      set -g message-command-style "bg=colour196,fg=colour231"
+      set -g mode-style "bg=colour88,fg=colour231"
+      set -g default-shell /usr/bin/zsh
+
+      # ============================================================================ #
+      # Copy / paste over SSH (OSC 52)                                               #
+      # ---------------------------------------------------------------------------- #
+      # This box is headless — no DISPLAY/Wayland, so xclip/wl-copy don't exist. The  #
+      # only way text reaches the laptop clipboard is OSC 52: an escape that travels  #
+      # back through SSH to Ghostty, which sets the system clipboard.                 #
+      #                                                                               #
+      # We do NOT use tmux's built-in set-clipboard for the emission: tmux 3.4 emits  #
+      # OSC 52 with an EMPTY selection field (]52;;<data>) which Ghostty silently     #
+      # ignores, and it won't honour an Ms override that drops a param. Instead the   #
+      # copy-mode bindings below pipe the selection through osc52.sh, which writes    #
+      # the explicit ]52;c;<data> form (Ghostty honours `c`) straight to the tty.     #
+      # set-clipboard stays on only so tmux still populates its own paste buffer.     #
+      set -g set-clipboard on
+      set -as terminal-features ",xterm-ghostty:clipboard"
+      set -as terminal-features ",*256col*:clipboard"
+
+      # ============================================================================ #
+      # Plugins — same set as the laptop, loaded explicitly via run-shell (the same  #
+      # style home-manager generates there). Cloned under ~/.tmux/plugins; refresh    #
+      # with: git -C ~/.tmux/plugins/<name> pull.                                     #
+      # ---------------------------------------------------------------------------- #
+      # plugin settings must be set BEFORE the plugin is sourced
+      set -g @yank_selection_mouse 'clipboard'
+      set -g @yank_action 'copy-pipe-no-clear'          # keep selection after copy
+      set -g @resurrect-capture-pane-contents 'on'
+      set -g @continuum-save-interval '15'
+      set -g @continuum-restore 'on'
+      set -g @tmux-which-key-xdg-enable 1
+
+      run-shell '/root/.tmux/plugins/vim-tmux-navigator/vim-tmux-navigator.tmux'  # C-h/j/k/l nav
+      run-shell '/root/.tmux/plugins/tmux-yank/yank.tmux'                          # y / mouse → clipboard
+      run-shell '/root/.tmux/plugins/extrakto/extrakto.tmux'                       # prefix+Tab fuzzy-grab
+      run-shell '/root/.tmux/plugins/tmux-fzf/main.tmux'                           # prefix+F fzf menu
+      run-shell '/root/.tmux/plugins/tmux-resurrect/resurrect.tmux'               # prefix+C-s / C-r
+      run-shell '/root/.tmux/plugins/tmux-continuum/continuum.tmux'               # auto save+restore
+      run-shell '/root/.tmux/plugins/tmux-which-key/plugin.sh.tmux'              # prefix+Space menu
+
+      # ---------------------------------------------------------------------------- #
+      # Copy-mode-vi bindings — declared AFTER the plugins so they win over tmux-yank #
+      # (whose y pipes to xclip/wl-copy, which don't exist on this headless box).     #
+      # ---------------------------------------------------------------------------- #
+      bind -T copy-mode-vi v send -X begin-selection
+      bind -T copy-mode-vi C-v send -X rectangle-toggle
+      # copy-pipe-* keeps the tmux buffer (prefix+] still works) AND pipes the
+      # selection to osc52.sh, which pushes it to the laptop clipboard over OSC 52.
+      bind -T copy-mode-vi y     send -X copy-pipe-and-cancel "bash /root/.tmux/osc52.sh '#{client_tty}'"
+      bind -T copy-mode-vi Enter send -X copy-pipe-and-cancel "bash /root/.tmux/osc52.sh '#{client_tty}'"
+      bind -T copy-mode-vi MouseDragEnd1Pane send -X copy-pipe-no-clear "bash /root/.tmux/osc52.sh '#{client_tty}'"
+
+      # reload config in place
+      bind r source-file ~/.tmux.conf \; display-message "tmux.conf reloaded"
+
+  # Pushes tmux copy-mode selections to the laptop clipboard over OSC 52.
+  - path: /root/.tmux/osc52.sh
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      # Push stdin onto the laptop clipboard via OSC 52, written straight to the
+      # client tty ($1 = tmux's #{client_tty}; falls back to /dev/tty).
+      # We emit the explicit `c` (clipboard) selection field because tmux's built-in
+      # OSC 52 uses an empty field (]52;;<data>) that Ghostty silently ignores.
+      set -uo pipefail
+      tty="${1:-/dev/tty}"
+      data="$(base64 | tr -d '\r\n')"
+      printf '\033]52;c;%s\a' "$data" > "$tty" 2>/dev/null || true
+
+  # Claude Code hooks -> tmux window status circle, for both account config dirs.
+  - path: /root/.claude/tmux-status.sh
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      # Reflect Claude's activity in the tmux window (tab) title via the per-pane user
+      # option @claude_pane_status; ~/.tmux.conf shows a window's most urgent one.
+      # Driven by Claude Code hooks (see ~/.claude/settings.json):
+      #   working → 🟡   waiting-for-you → 🟢   needs-input/permission → 🔴
+      # No-op when not running inside tmux.
+      #
+      # Usage: tmux-status.sh <working|waiting|input|clear>
+      [ -z "$TMUX_PANE" ] && exit 0
+
+      case "$1" in
+        working) status="🟡 " ;;
+        waiting) status="🟢 " ;;
+        input)   status="🔴 " ;;
+        *)       status="" ;;
+      esac
+
+      tmux set-option -p -t "$TMUX_PANE" @claude_pane_status "$status" 2>/dev/null || true
+      exit 0
+
+  - path: /root/.claude/settings.json
+    permissions: "0644"
+    content: &claude_hooks |
+      {
+        "hooks": {
+          "SessionStart": [
+            {
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "~/.claude/tmux-status.sh waiting"
+                }
+              ]
+            }
+          ],
+          "UserPromptSubmit": [
+            {
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "~/.claude/tmux-status.sh working"
+                }
+              ]
+            }
+          ],
+          "PreToolUse": [
+            {
+              "matcher": "*",
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "~/.claude/tmux-status.sh working"
+                }
+              ]
+            }
+          ],
+          "PostToolUse": [
+            {
+              "matcher": "*",
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "~/.claude/tmux-status.sh working"
+                }
+              ]
+            }
+          ],
+          "Notification": [
+            {
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "~/.claude/tmux-status.sh input"
+                }
+              ]
+            }
+          ],
+          "Stop": [
+            {
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "~/.claude/tmux-status.sh waiting"
+                }
+              ]
+            }
+          ],
+          "SessionEnd": [
+            {
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "~/.claude/tmux-status.sh clear"
+                }
+              ]
+            }
+          ]
+        }
+      }
+
+  - path: /root/.claude-A/settings.json
+    permissions: "0644"
+    content: *claude_hooks
+
+  # zsh is tmux's default-shell. claudeA = adrien@ (~/.claude-A), claudeF = founders@ (~/.claude).
+  - path: /root/.zshrc
+    permissions: "0644"
+    content: |
+      # Only what the Claude account wrappers need; this is not the live box's full .zshrc.
+      # zsh does not read /etc/profile.d, so the npm prefix holding the CLI goes on PATH here.
+      export PATH=/root/.npm-global/bin:$PATH
+
+      # Claude account wrappers, named the same on the laptop and this box:
+      # claudeA = adrien@ (~/.claude-A), claudeF = founders@ (~/.claude). They tag the
+      # tmux window with an account marker, cleared on exit along with the status circle.
+      _claude_as() {
+        local acct=$1; shift
+        [ -n "$TMUX" ] && tmux set -w @claude_acct "$acct"
+        command claude "$@"
+        local ret=$?
+        [ -n "$TMUX" ] && tmux set -wu @claude_acct \; set -pu @claude_pane_status
+        return $ret
+      }
+      claudeA() { CLAUDE_CONFIG_DIR="$HOME/.claude-A" _claude_as A "$@"; }
+      claudeF() { _claude_as F "$@"; }
+      # Bare `claude` is this machine's default account (adrien@ on the laptop).
+      claude() { claudeF "$@"; }
 
 runcmd:
   # 1. Nix (Determinate Systems installer — robust on cloud, multi-user daemon).
@@ -89,12 +318,28 @@ runcmd:
   - npm config set prefix /root/.npm-global
   - npm install -g @anthropic-ai/claude-code
   - 'echo "export PATH=/root/.npm-global/bin:\$PATH" > /etc/profile.d/npm-global.sh'
-  # 4. Bring up the persistent tmux session and make it boot-persistent.
+  # 4. tmux plugins loaded by .tmux.conf; must exist before the tmux server starts.
+  #    --recursive: tmux-which-key vendors pyyaml as a submodule.
+  - |
+    for repo in \
+      christoomey/vim-tmux-navigator \
+      tmux-plugins/tmux-yank \
+      laktak/extrakto \
+      sainnhe/tmux-fzf \
+      tmux-plugins/tmux-resurrect \
+      tmux-plugins/tmux-continuum \
+      alexwforsythe/tmux-which-key
+    do
+      git clone --recursive "https://github.com/$repo" "/root/.tmux/plugins/${repo#*/}"
+    done
+  # tmux-which-key's XDG setup aborts on a missing parent ("realpath" on ~/.local/share).
+  - mkdir -p /root/.local/share
+  # 5. Bring up the persistent tmux session and make it boot-persistent.
   - systemctl daemon-reload
   - systemctl enable --now devbox-tmux.service
-  # 5. Seed the session: drop into a shell ready to run `claude` (auth happens on first attach).
+  # 6. Seed the session: drop into a shell ready to run `claude` (auth happens on first attach).
   - sleep 3
-  - "tmux send-keys -t main 'echo Dev box ready - run claude to start (first run prompts for auth)' C-m"
+  - "tmux send-keys -t main 'echo Dev box ready - run claude to start, first run prompts for auth' C-m"
   - touch /root/.devbox-ready
 
 final_message: "Hetzner dev box configured in $UPTIME s — tmux session 'main' is live."
