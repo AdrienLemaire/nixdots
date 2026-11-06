@@ -292,6 +292,16 @@ in
       mutable = true;
     };
 
+    # zathura copies to the primary selection by default, which cliphist's
+    # wl-paste watchers (and so mod+v) never see.
+    ".config/zathura/zathurarc" = {
+      text = ''
+        set database "sqlite"
+        set selection-clipboard clipboard
+      '';
+      force = true;
+    };
+
     ".config/hyde/wallbash/always/tmux.dcol" = {
       source = ./home/wallbash/tmux.dcol;
       force = true;

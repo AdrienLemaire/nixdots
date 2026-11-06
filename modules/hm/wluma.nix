@@ -1,8 +1,7 @@
 # Adaptive brightness from the ambient light sensor (iio "als", read directly
 # from sysfs; no iio-sensor-proxy needed). wluma 5 learns from manual changes:
-# a brightness key press is remembered for that light level and screen
-# content. The 5.x package override and the backlight udev rule live in
-# modules/system/wluma.nix.
+# a brightness key press is remembered for that light level. The 5.x package
+# override and the backlight udev rule live in modules/system/wluma.nix.
 { lib, pkgs, ... }:
 
 let
@@ -42,6 +41,10 @@ in
           {
             name = "eDP-1";
             gamma = false;
+            # Light sensor only. With screen capture, a one-point luma change
+            # could swing the panel 49% -> 26% between contradictory learned
+            # points, in wluma's fixed 200 ms transition: a visible flash.
+            capturer = "none";
           }
         ];
         # No external answers DDC/CI (S3 pair: no support; Dell: the
