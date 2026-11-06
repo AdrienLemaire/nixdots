@@ -119,15 +119,14 @@ write_files:
       # ignores, and it won't honour an Ms override that drops a param. Instead the   #
       # copy-mode bindings below pipe the selection through osc52.sh, which writes    #
       # the explicit ]52;c;<data> form (Ghostty honours `c`) straight to the tty.     #
-      # set-clipboard stays on only so tmux still populates its own paste buffer.     #
-      set -g set-clipboard on
-      set -as terminal-features ",xterm-ghostty:clipboard"
-      set -as terminal-features ",*256col*:clipboard"
+      # set-clipboard is off so programs in a pane can't set the buffer or clipboard; #
+      # copy-pipe-* still fills tmux's own paste buffer.                              #
+      set -g set-clipboard off
 
       # ============================================================================ #
       # Plugins — same set as the laptop, loaded explicitly via run-shell (the same  #
-      # style home-manager generates there). Cloned under ~/.tmux/plugins; refresh    #
-      # with: git -C ~/.tmux/plugins/<name> pull.                                     #
+      # style home-manager generates there). Cloned under ~/.tmux/plugins, pinned in  #
+      # hydenix's hetzner-cloud-init.yaml; bump those commits after a reviewed pull.  #
       # ---------------------------------------------------------------------------- #
       # plugin settings must be set BEFORE the plugin is sourced
       set -g @yank_selection_mouse 'clipboard'
@@ -319,19 +318,24 @@ runcmd:
   - npm install -g @anthropic-ai/claude-code
   - 'echo "export PATH=/root/.npm-global/bin:\$PATH" > /etc/profile.d/npm-global.sh'
   # 4. tmux plugins loaded by .tmux.conf; must exist before the tmux server starts.
-  #    --recursive: tmux-which-key vendors pyyaml as a submodule.
+  #    They run as root, so each is pinned to a reviewed commit. --no-checkout makes a
+  #    bad pin fail closed: no plugin files rather than an unreviewed default branch.
+  #    Submodules (tmux-which-key vendors pyyaml) follow the pinned commit.
   - |
-    for repo in \
-      christoomey/vim-tmux-navigator \
-      tmux-plugins/tmux-yank \
-      laktak/extrakto \
-      sainnhe/tmux-fzf \
-      tmux-plugins/tmux-resurrect \
-      tmux-plugins/tmux-continuum \
-      alexwforsythe/tmux-which-key
-    do
-      git clone --recursive "https://github.com/$repo" "/root/.tmux/plugins/${repo#*/}"
-    done
+    while read -r sha repo; do
+      dir="/root/.tmux/plugins/${repo#*/}"
+      git clone --no-checkout "https://github.com/$repo" "$dir" &&
+        git -C "$dir" checkout --quiet "$sha" &&
+        git -C "$dir" submodule update --init --recursive
+    done <<'PINS'
+    e41c431a0c7b7388ae7ba341f01a0d217eb3a432 christoomey/vim-tmux-navigator
+    acfd36e4fcba99f8310a7dfb432111c242fe7392 tmux-plugins/tmux-yank
+    d1af77988081dae496fa4a1f5e5e6bc9ef66767f laktak/extrakto
+    05af76daa2487575b93a4f604693b00969f19c2f sainnhe/tmux-fzf
+    cff343cf9e81983d3da0c8562b01616f12e8d548 tmux-plugins/tmux-resurrect
+    0698e8f4b17d6454c71bf5212895ec055c578da0 tmux-plugins/tmux-continuum
+    85fb9756447b989f3b94e515d1e6ee7fec76cba2 alexwforsythe/tmux-which-key
+    PINS
   # tmux-which-key's XDG setup aborts on a missing parent ("realpath" on ~/.local/share).
   - mkdir -p /root/.local/share
   # 5. Bring up the persistent tmux session and make it boot-persistent.
