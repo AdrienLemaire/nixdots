@@ -498,6 +498,12 @@ in
       mutable = true;
       executable = true;
     };
+    ".claude/hooks/tmux-status.sh" = {
+      source = ./scripts/tmux-status.sh;
+      force = true;
+      mutable = true;
+      executable = true;
+    };
 
     ".gitconfig" = {
       source = ./home/gitconfig;

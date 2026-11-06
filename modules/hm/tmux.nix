@@ -42,6 +42,12 @@
         extraConfig = ''
           set -g @continuum-save-interval '15'
           set -g @continuum-restore 'on'
+
+          # Continuum autosaves through a #() it prepends to status-right when it
+          # loads, and this block is emitted right before that. So status-right is
+          # set only here (each reload drops the previous store path), and themes
+          # set @theme_status_right instead. T: expands the theme's strftime codes.
+          set -g status-right "#{T:@theme_status_right}"
         '';
       }
       {
@@ -61,12 +67,19 @@
       # come from baseIndex above).
       set -g renumber-windows on
 
-      # Claude Code sets the terminal title to its current task; tmux stores it as
-      # the pane title (#T). Forward it to the outer terminal tab, and show it in
-      # the window list for windows tagged by the claude/claude2 zsh wrappers
-      # (@claude_acct carries a colored per-account marker).
+      # Single source of truth for a window's label, used by the outer terminal
+      # title and the window list (fallback theme below and wallbash/tmux.dcol).
+      # Claude Code hooks (scripts/tmux-status.sh) set @claude_pane_status per
+      # pane; @claude_circle shows the window's most urgent one (🔴 > 🟡 > 🟢).
+      # Claude Code titles its pane "<icon> <task>":
+      #  - renamed window (automatic-rename off): "<circle> <custom name>"
+      #  - unnamed window running Claude: "<circle> <task>", icon stripped
+      #  - anything else: the window name
+      # Mirrored by hand in the Hetzner box's ~/.tmux.conf.
+      set -g @claude_circle '#{?#{m:*🔴*,#{P:#{@claude_pane_status}}},🔴 ,#{?#{m:*🟡*,#{P:#{@claude_pane_status}}},🟡 ,#{?#{m:*🟢*,#{P:#{@claude_pane_status}}},🟢 ,}}}'
+      set -g @window_label '#{E:@claude_circle}#{?#{&&:#{automatic-rename},#{m/r:^[^ -~],#{pane_title}}},#{=20;s/^[^ -~]+ //:pane_title},#W}'
       set -g set-titles on
-      set -g set-titles-string "#S:#I #T"
+      set -g set-titles-string "#S:#I #{E:@window_label}"
 
       # Carry WAYLAND_DISPLAY into panes so wl-copy/wl-paste (and Claude Code's
       # image paste, which shells out to wl-paste) can reach the compositor.
@@ -102,11 +115,11 @@
           set -g status-style "bg=#1e1e2e,fg=#cdd6f4" ; \
           set -g status-left-length 40 ; \
           set -g status-left "#[fg=#1e1e2e,bg=#cba6f7,bold] #S #[default] " ; \
-          set -g window-status-format " #I #{?#{@claude_acct},#{?#{==:#{@claude_acct},A},#[fg=green],#[fg=magenta]}#{@claude_acct}#[default] #{?#{pane_title},#{=20:pane_title},#W},#W} " ; \
-          set -g window-status-current-format "#[fg=#1e1e2e,bg=#cba6f7,bold] #I #{?#{@claude_acct},#{@claude_acct} #{?#{pane_title},#{=20:pane_title},#W},#W} #[default]" ; \
+          set -g window-status-format " #I #{?#{@claude_acct},#{?#{==:#{@claude_acct},A},#[fg=green],#[fg=magenta]}#{@claude_acct}#[default] ,}#{E:@window_label} " ; \
+          set -g window-status-current-format "#[fg=#1e1e2e,bg=#cba6f7,bold] #I #{?#{@claude_acct},#{@claude_acct} ,}#{E:@window_label} #[default]" ; \
           set -g window-status-separator "" ; \
           set -g status-right-length 60 ; \
-          set -g status-right "#[fg=#b4befe] %Y-%m-%d #[fg=#1e1e2e,bg=#cba6f7,bold] %H:%M " ; \
+          set -g @theme_status_right "#[fg=#b4befe] %Y-%m-%d #[fg=#1e1e2e,bg=#cba6f7,bold] %H:%M " ; \
           set -g pane-border-style "fg=#313244" ; \
           set -g pane-active-border-style "fg=#cba6f7" ; \
           set -g message-style "bg=#cba6f7,fg=#1e1e2e" ; \
