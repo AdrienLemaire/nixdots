@@ -486,12 +486,6 @@ in
     };
     # NB: .local/lib/hyde/brightness-all.sh is NOT declared here -- it is
     # supplied by the patchedHydeLib tree above, for the same reason.
-    ".local/share/bin/claude-statusline.sh" = {
-      source = ./scripts/claude-statusline.sh;
-      force = true;
-      mutable = true;
-      executable = true;
-    };
     ".claude/hooks/memgate.sh" = {
       source = ./scripts/memgate.sh;
       force = true;

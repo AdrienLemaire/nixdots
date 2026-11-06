@@ -339,6 +339,17 @@ runcmd:
     0698e8f4b17d6454c71bf5212895ec055c578da0 tmux-plugins/tmux-continuum
     85fb9756447b989f3b94e515d1e6ee7fec76cba2 alexwforsythe/tmux-which-key
     PINS
+  # Per-account status line, same style and colours as the laptop. The two settings.json
+  # share their hooks through a YAML anchor, so this differing key is merged in here.
+  - |
+    python3 - <<'PY'
+    import json
+    for d, color, name in ((".claude", 35, "founders"), (".claude-A", 32, "adrien")):
+        p = f"/root/{d}/settings.json"
+        s = json.load(open(p, encoding="utf-8"))
+        s["statusLine"] = {"type": "command", "command": f"printf '\\033[1;{color}m👤 {name}\\033[0m'"}
+        json.dump(s, open(p, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+    PY
   # tmux-which-key's XDG setup aborts on a missing parent ("realpath" on ~/.local/share).
   - mkdir -p /root/.local/share
   # 5. Bring up the persistent tmux session and make it boot-persistent.
