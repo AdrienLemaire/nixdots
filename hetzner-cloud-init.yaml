@@ -91,12 +91,15 @@ write_files:
       # Label rules mirror the laptop (hydenix modules/hm/tmux.nix): a renamed window
       # keeps its name; an unnamed Claude window shows the task, icon stripped.
       set -g @claude_circle '#{?#{m:*🔴*,#{P:#{@claude_pane_status}}},🔴 ,#{?#{m:*🟡*,#{P:#{@claude_pane_status}}},🟡 ,#{?#{m:*🟢*,#{P:#{@claude_pane_status}}},🟢 ,}}}'
+      # claudeA/claudeF set @claude_pane_acct per pane; these show a window's accounts.
+      set -g @claude_acct_list '#{?#{m:*A*,#{P:#{@claude_pane_acct}}},#[fg=green]A#[default],}#{?#{m:*F*,#{P:#{@claude_pane_acct}}},#[fg=magenta]F#[default],}#{?#{P:#{@claude_pane_acct}}, ,}'
+      set -g @claude_acct_current '#{?#{m:*A*,#{P:#{@claude_pane_acct}}},A,}#{?#{m:*F*,#{P:#{@claude_pane_acct}}},F,}#{?#{P:#{@claude_pane_acct}}, ,}'
       set -g @window_label '#{E:@claude_circle}#{?#{&&:#{automatic-rename},#{m/r:^[^ -~],#{pane_title}}},#{=20;s/^[^ -~]+ //:pane_title},#W}'
       set -g set-titles on
       set -g set-titles-string "#S:#I #{E:@window_label}"
       # Same layout as the laptop; only colours and the HETZNER label differ.
-      set -g window-status-format " #I #{?#{@claude_acct},#{?#{==:#{@claude_acct},A},#[fg=green],#[fg=magenta]}#{@claude_acct}#[default] ,}#{E:@window_label} "
-      set -g window-status-current-format "#[bg=colour88,fg=colour231,bold] #I #{?#{@claude_acct},#{@claude_acct} ,}#{E:@window_label} #[default]"
+      set -g window-status-format " #I #{E:@claude_acct_list}#{E:@window_label} "
+      set -g window-status-current-format "#[bg=colour88,fg=colour231,bold] #I #{E:@claude_acct_current}#{E:@window_label} #[default]"
       set -g window-status-separator ""
       set -g status-right "#[fg=colour224] %Y-%m-%d #[bg=colour196,fg=colour231,bold] %H:%M "
       set -g status-right-length 60
@@ -291,13 +294,13 @@ write_files:
 
       # Claude account wrappers, named the same on the laptop and this box:
       # claudeA = adrien@ (~/.claude-A), claudeF = founders@ (~/.claude). They tag the
-      # tmux window with an account marker, cleared on exit along with the status circle.
+      # tmux pane with its account, cleared on exit along with the status circle.
       _claude_as() {
         local acct=$1; shift
-        [ -n "$TMUX" ] && tmux set -w @claude_acct "$acct"
+        [ -n "$TMUX" ] && tmux set -p -t "$TMUX_PANE" @claude_pane_acct "$acct"
         command claude "$@"
         local ret=$?
-        [ -n "$TMUX" ] && tmux set -wu @claude_acct \; set -pu @claude_pane_status
+        [ -n "$TMUX" ] && tmux set -pu -t "$TMUX_PANE" @claude_pane_acct \; set -pu -t "$TMUX_PANE" @claude_pane_status
         return $ret
       }
       claudeA() { CLAUDE_CONFIG_DIR="$HOME/.claude-A" _claude_as A "$@"; }

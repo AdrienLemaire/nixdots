@@ -10,17 +10,16 @@ eval "$(zoxide init zsh)"
 alias vi=nvim
 alias vim=nvim
 # Claude account wrappers, named the same on the laptop and the Hetzner box:
-# claudeA = adrien@, claudeF = founders@. They tag the tmux window with an account
-# marker so the window list shows which account each session runs, alongside the
-# window label (@window_label in tmux.nix). tmux.nix and wallbash/tmux.dcol also
-# color the marker green/magenta on non-highlighted windows. Exiting also clears
-# the status circle, in case Claude died without running its SessionEnd hook.
+# claudeA = adrien@, claudeF = founders@. They tag the tmux pane with its account,
+# so the window list shows which accounts a window runs (@claude_acct_list in
+# tmux.nix). Exiting clears the tag and also the status circle, in case Claude
+# died without running its SessionEnd hook.
 _claude_as() {
   local acct=$1; shift
-  [ -n "$TMUX" ] && tmux set -w @claude_acct "$acct"
+  [ -n "$TMUX" ] && tmux set -p -t "$TMUX_PANE" @claude_pane_acct "$acct"
   command claude "$@"
   local ret=$?
-  [ -n "$TMUX" ] && tmux set -wu @claude_acct \; set -pu @claude_pane_status
+  [ -n "$TMUX" ] && tmux set -pu -t "$TMUX_PANE" @claude_pane_acct \; set -pu -t "$TMUX_PANE" @claude_pane_status
   return $ret
 }
 claudeA() { _claude_as A "$@"; }

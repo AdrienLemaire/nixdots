@@ -77,6 +77,10 @@
       #  - anything else: the window name
       # Mirrored by hand in the Hetzner box's ~/.tmux.conf.
       set -g @claude_circle '#{?#{m:*🔴*,#{P:#{@claude_pane_status}}},🔴 ,#{?#{m:*🟡*,#{P:#{@claude_pane_status}}},🟡 ,#{?#{m:*🟢*,#{P:#{@claude_pane_status}}},🟢 ,}}}'
+      # The claudeA/claudeF zsh wrappers set @claude_pane_acct per pane; these show
+      # which accounts a window runs (A, F or AF), colored on non-highlighted windows.
+      set -g @claude_acct_list '#{?#{m:*A*,#{P:#{@claude_pane_acct}}},#[fg=green]A#[default],}#{?#{m:*F*,#{P:#{@claude_pane_acct}}},#[fg=magenta]F#[default],}#{?#{P:#{@claude_pane_acct}}, ,}'
+      set -g @claude_acct_current '#{?#{m:*A*,#{P:#{@claude_pane_acct}}},A,}#{?#{m:*F*,#{P:#{@claude_pane_acct}}},F,}#{?#{P:#{@claude_pane_acct}}, ,}'
       set -g @window_label '#{E:@claude_circle}#{?#{&&:#{automatic-rename},#{m/r:^[^ -~],#{pane_title}}},#{=20;s/^[^ -~]+ //:pane_title},#W}'
       set -g set-titles on
       set -g set-titles-string "#S:#I #{E:@window_label}"
@@ -115,8 +119,8 @@
           set -g status-style "bg=#1e1e2e,fg=#cdd6f4" ; \
           set -g status-left-length 40 ; \
           set -g status-left "#[fg=#1e1e2e,bg=#cba6f7,bold] #S #[default] " ; \
-          set -g window-status-format " #I #{?#{@claude_acct},#{?#{==:#{@claude_acct},A},#[fg=green],#[fg=magenta]}#{@claude_acct}#[default] ,}#{E:@window_label} " ; \
-          set -g window-status-current-format "#[fg=#1e1e2e,bg=#cba6f7,bold] #I #{?#{@claude_acct},#{@claude_acct} ,}#{E:@window_label} #[default]" ; \
+          set -g window-status-format " #I #{E:@claude_acct_list}#{E:@window_label} " ; \
+          set -g window-status-current-format "#[fg=#1e1e2e,bg=#cba6f7,bold] #I #{E:@claude_acct_current}#{E:@window_label} #[default]" ; \
           set -g window-status-separator "" ; \
           set -g status-right-length 60 ; \
           set -g @theme_status_right "#[fg=#b4befe] %Y-%m-%d #[fg=#1e1e2e,bg=#cba6f7,bold] %H:%M " ; \

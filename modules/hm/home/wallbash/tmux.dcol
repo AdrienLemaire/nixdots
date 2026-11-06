@@ -9,10 +9,9 @@ set -g status-style "bg=#<wallbash_pry1>,fg=#<wallbash_txt1>"
 set -g status-left-length 40
 set -g status-left "#[fg=#<wallbash_pry1>,bg=#<wallbash_1xa6>,bold] #S #[default] "
 
-# Windows tagged by the claudeA/claudeF zsh wrappers (@claude_acct = colored
-# account marker) show the marker before the label; @window_label is in tmux.nix.
-set -g window-status-format " #I #{?#{@claude_acct},#{?#{==:#{@claude_acct},A},#[fg=green],#[fg=magenta]}#{@claude_acct}#[default] ,}#{E:@window_label} "
-set -g window-status-current-format "#[fg=#<wallbash_pry1>,bg=#<wallbash_1xa6>,bold] #I #{?#{@claude_acct},#{@claude_acct} ,}#{E:@window_label} #[default]"
+# Account marker and label are defined in tmux.nix.
+set -g window-status-format " #I #{E:@claude_acct_list}#{E:@window_label} "
+set -g window-status-current-format "#[fg=#<wallbash_pry1>,bg=#<wallbash_1xa6>,bold] #I #{E:@claude_acct_current}#{E:@window_label} #[default]"
 set -g window-status-separator ""
 
 set -g status-right-length 60
