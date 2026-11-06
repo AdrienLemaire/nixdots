@@ -79,6 +79,12 @@ let
       gamelauncher.sh globalcontrol.sh quickapps.sh; do
       grep -q 'scale \* 100' $out/$f || { echo "monitor-scale patch missed $f"; exit 1; }
     done
+    # cliphist.sh (mod+v / mod+shift+v) anchors rofi at the cursor via
+    # get_rofi_pos. With the pointer near the bottom edge the list grows past
+    # the screen, so pin it to the centre of the focused monitor instead.
+    sed -i 's#rofi_position=$(get_rofi_pos)#rofi_position="window{location:center;anchor:center;x-offset:0;y-offset:0;}"#' \
+      $out/cliphist.sh
+    grep -q 'location:center' $out/cliphist.sh || { echo "cliphist centre patch missed"; exit 1; }
     # Installed next to HyDE's own scripts so keybindings.conf can reach it via
     # $scrPath, the same way every other bind in that file does. It has to go in
     # the tree rather than its own home.file entry for the reason above.

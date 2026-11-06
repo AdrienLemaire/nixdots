@@ -90,6 +90,11 @@
             }
           ];
         };
+        # NOTE: an unquoted dotted key (`monitor.alsa.rules`, `node.name`)
+        # becomes a nested object in the generated SPA-JSON, which WirePlumber
+        # ignores -- so 10-maono-alsa, 50-audio-priority and
+        # 99-disable-suspension have no effect on the live daemon. Quote the
+        # keys in any new rule.
         # Late: Disable suspension to prevent static noise on XPS/Intel
         "99-disable-suspension" = {
           monitor.alsa.rules = [
@@ -141,6 +146,18 @@
     # Deleted rather than left commented-out precisely because "correcting" the
     # Nix syntax would silently arm it. The rate was 48000 either way.
     extraConfig.pipewire = {
+      # Floor the graph quantum at the card's ALSA period (1024 frames, 21 ms).
+      # Low-latency clients -- pavucontrol's level meters above all -- pull the
+      # quantum down to 256 (5.3 ms), and the sof_sdw PCMs cannot keep that
+      # deadline: whichever node drives (speaker, mic, HDMI) runs 8-76 ms late,
+      # the speaker loops on "snd_pcm_avail after recover: Broken pipe" and
+      # all playback stalls. Every incident (2026-10-25..29) ran at 256;
+      # forcing 1024 live with pavucontrol open stopped the errors at once.
+      "92-min-quantum" = {
+        "context.properties" = {
+          "default.clock.min-quantum" = 1024;
+        };
+      };
       # Loudness chain for the built-in speakers.
       #
       # The rt1316 smart-amp path has NO headroom left: every hardware gain

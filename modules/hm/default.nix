@@ -9,6 +9,9 @@
     ./goals-window.nix
     ./hypr-reload.nix
     ./hyprland-session.nix
+    ./hyprsunset.nix
+    ./job-health.nix
+    ./wluma.nix
     ./hypridle-recycle.nix
     ./theme-activation-env.nix
     ./tmux.nix
@@ -17,6 +20,9 @@
 
   home.packages = [
     pkgs.nu_scripts
+    # HyDE runtime deps hydenix doesn't ship:
+    pkgs.pulseaudio # pactl only: volumecontrol.sh detects PipeWire via `pactl info`
+    pkgs.wtype # paste_string: auto-paste for clipboard/emoji/glyph pickers
   ];
 
   # Newer home-manager flipped this default from true to false, and warns while
@@ -70,7 +76,12 @@
           }
 
           monitor = eDP-1, 1920x1200, 0x0, 1
-          monitor = DP-4, 2048x1080, -384x-1080, 1
+          # Native 1440p: anything else is rescaled by the panel and blurs text.
+          # Scale 1.25 -> logical 2048x1152, keeping the old width centered
+          # above eDP-1. Must be 75 Hz: through the USB-C->HDMI adapter the
+          # monitor rejects its own advertised 59.95 Hz mode ("input timing is
+          # not supported ... change to 2560x1440, 75Hz").
+          monitor = DP-4, 2560x1440@74.97, -384x-1152, 1.25
           monitor = desc:SNL S3-L S3-L 20241026, 1920x1080, -1920x0, 1
           monitor = desc:SNR S3-R S3-R 20241026, 1920x1080, 1920x0, 1
 
@@ -183,7 +194,7 @@
       hypridle = {
         enable = true; # enable hypridle configurations
         extraConfig = ""; # additional hypridle configuration
-        overrideConfig = null; # complete hypridle configuration override (null or lib.types.lines)
+        # overrideConfig is set in ./wluma.nix (drops HyDE's brightness dim listener)
       };
       # Keybindings configurations
       keybindings = {

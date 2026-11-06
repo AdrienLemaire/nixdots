@@ -19,9 +19,14 @@
   '';
   # The attribute name IS the layout name: it becomes symbols/<name> in the
   # merged xkb tree, so it must match the kb_layout used in modules/hm.
+  # AltGr+S gives á/Á instead of æ/Æ (æ stays reachable via Compose a e).
   services.xserver.xkb.extraLayouts."us_qwerty-fr" = {
     languages = [ "eng" "fra" ];
-    symbolsFile = "${pkgs.qwerty-fr}/share/X11/xkb/symbols/us_qwerty-fr";
+    symbolsFile = pkgs.runCommand "us_qwerty-fr" { } ''
+      sed '/key <AC02>/s/ae, *AE /aacute, Aacute/' \
+        ${pkgs.qwerty-fr}/share/X11/xkb/symbols/us_qwerty-fr > $out
+      grep -q 'key <AC02>.*aacute, Aacute' $out
+    '';
     description = "make qwerty-fr accessible as a layout in nixos";
   };
   # JIS keyboards: keep the printed JIS legends, add qwerty-fr accents on AltGr.
@@ -47,4 +52,8 @@
 
 
   services.safeeyes.enable = true;
+
+  # Backs the waybar power-profiles-daemon module (dropped silently without
+  # the service) and HyDE's powerprofilesctl calls. No TLP/auto-cpufreq here.
+  services.power-profiles-daemon.enable = true;
 }

@@ -49,7 +49,7 @@
     "modules": [
       "network#bandwidthUpBytes",
       "network#bandwidthDownBytes",
-      "custom/bluetooth",
+      "bluetooth",
       "pulseaudio",
       "pulseaudio#microphone",
       "battery",

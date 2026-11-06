@@ -52,6 +52,8 @@ goals() { cd "$_goals_dir" && claude "$@"; }
 dev()   { cd ~/Projects/Perso/cartoucherie && claude "$@"; }
 # Job hunt: the cv repo is added so its CV source and rules are readable.
 jh()    { cd ~/Projects/Perso/job-hunt && claude --add-dir ../cv "$@"; }
+# jhw <name> -- a repo change in its own worktree; the script is in the repo.
+jhw()   { ~/Projects/Perso/job-hunt/scripts/jhw.sh "$@"; }
 
 # goal <name> -- a session narrowed to ONE goal, e.g. `goal sport`.
 # Same repo, same memory, same skills; only the system prompt is scoped, so a

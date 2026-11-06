@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Open Claude in the goals repo. One executable and nothing else.
+# Open Claude in the goals repo with the /weekly skill as its first prompt.
+# One executable and nothing else. Without the prompt, claude opens at an
+# empty input line and the review never starts (seen 6 Sep 2026).
 #
 # hyprctl dispatch exec hands its whole argument to /bin/sh -c: redirections,
 # compound commands and nested quotes after -e are eaten by that outer shell
@@ -12,4 +14,4 @@
 # already uses; `claude` resolves via ~/.local/bin, never the versioned target.
 set -u
 REPO="${GOALS_REPO:-$HOME/Projects/Perso/personal-goals}"
-exec ghostty --working-directory="$REPO" -e claude
+exec ghostty --working-directory="$REPO" -e claude /weekly
