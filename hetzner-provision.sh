@@ -69,8 +69,8 @@ Or with mosh (survives laptop sleep / network changes — recommended):
     mosh --ssh="ssh -i $SSH_PRIV" root@$IP
 
 Inside, you're dropped into tmux session 'main'. First time for each account:
-    claudeA           # adrien@ (~/.claude-A); will prompt for auth (login or ANTHROPIC_API_KEY)
-    claudeF           # founders@ (~/.claude), same as plain claude; will prompt for auth too
+    claudeA           # adrien@ (~/.claude-adrien); will prompt for auth (login or ANTHROPIC_API_KEY)
+    claudeF           # founders@ (~/.claude-founders), same as plain claude; will prompt for auth too
 
 Detach from tmux:  Ctrl-a then d   (session keeps running on the server)
 Re-attach later:   just ssh/mosh back in.

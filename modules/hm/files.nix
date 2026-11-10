@@ -496,13 +496,13 @@ in
     };
     # NB: .local/lib/hyde/brightness-all.sh is NOT declared here -- it is
     # supplied by the patchedHydeLib tree above, for the same reason.
-    ".claude/hooks/memgate.sh" = {
+    ".claude-adrien/hooks/memgate.sh" = {
       source = ./scripts/memgate.sh;
       force = true;
       mutable = true;
       executable = true;
     };
-    ".claude/hooks/tmux-status.sh" = {
+    ".claude-adrien/hooks/tmux-status.sh" = {
       source = ./scripts/tmux-status.sh;
       force = true;
       mutable = true;

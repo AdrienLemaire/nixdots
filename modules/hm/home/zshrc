@@ -22,8 +22,8 @@ _claude_as() {
   [ -n "$TMUX" ] && tmux set -pu -t "$TMUX_PANE" @claude_pane_acct \; set -pu -t "$TMUX_PANE" @claude_pane_status
   return $ret
 }
-claudeA() { _claude_as A "$@"; }
-claudeF() { CLAUDE_CONFIG_DIR=~/.claude-account2 _claude_as F "$@"; }
+claudeA() { CLAUDE_CONFIG_DIR=~/.claude-adrien _claude_as A "$@"; }
+claudeF() { CLAUDE_CONFIG_DIR=~/.claude-founders _claude_as F "$@"; }
 # Bare `claude` is this machine's default account (founders@ on the Hetzner box).
 claude() { claudeA "$@"; }
 

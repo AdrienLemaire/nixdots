@@ -4,7 +4,7 @@
 # Waits (sleep-poll, zero tokens, no held API connection) until resources
 # free up; past MAX_WAIT it denies with guidance so the hook never trips its
 # own timeout (a timed-out hook fails OPEN and the tool runs anyway).
-# Registered in ~/.claude/settings.json and ~/.claude-account2/settings.json.
+# Registered in ~/.claude-adrien/settings.json and ~/.claude-founders/settings.json.
 # Thresholds are env-overridable for testing (MEMGATE_*).
 set -u
 

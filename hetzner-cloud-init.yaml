@@ -86,7 +86,7 @@ write_files:
       set -g status-style "bg=colour52,fg=colour231"
       set -g status-left "#[bg=colour196,fg=colour231,bold] HETZNER #[bg=colour52,fg=colour231] #S "
       set -g status-left-length 40
-      # @claude_pane_status is a per-pane flag set by Claude Code hooks (~/.claude/tmux-status.sh):
+      # @claude_pane_status is a per-pane flag set by Claude Code hooks (~/.claude-founders/tmux-status.sh):
       # 🟡 working · 🟢 waiting for you · 🔴 needs input. @claude_circle shows a window's most urgent.
       # Label rules mirror the laptop (hydenix modules/hm/tmux.nix): a renamed window
       # keeps its name; an unnamed Claude window shows the task, icon stripped.
@@ -177,13 +177,13 @@ write_files:
       printf '\033]52;c;%s\a' "$data" > "$tty" 2>/dev/null || true
 
   # Claude Code hooks -> tmux window status circle, for both account config dirs.
-  - path: /root/.claude/tmux-status.sh
+  - path: /root/.claude-founders/tmux-status.sh
     permissions: "0755"
     content: |
       #!/usr/bin/env bash
       # Reflect Claude's activity in the tmux window (tab) title via the per-pane user
       # option @claude_pane_status; ~/.tmux.conf shows a window's most urgent one.
-      # Driven by Claude Code hooks (see ~/.claude/settings.json):
+      # Driven by Claude Code hooks (see ~/.claude-founders/settings.json):
       #   working → 🟡   waiting-for-you → 🟢   needs-input/permission → 🔴
       # No-op when not running inside tmux.
       #
@@ -200,7 +200,7 @@ write_files:
       tmux set-option -p -t "$TMUX_PANE" @claude_pane_status "$status" 2>/dev/null || true
       exit 0
 
-  - path: /root/.claude/settings.json
+  - path: /root/.claude-founders/settings.json
     permissions: "0644"
     content: &claude_hooks |
       {
@@ -210,7 +210,7 @@ write_files:
               "hooks": [
                 {
                   "type": "command",
-                  "command": "~/.claude/tmux-status.sh waiting"
+                  "command": "~/.claude-founders/tmux-status.sh waiting"
                 }
               ]
             }
@@ -220,7 +220,7 @@ write_files:
               "hooks": [
                 {
                   "type": "command",
-                  "command": "~/.claude/tmux-status.sh working"
+                  "command": "~/.claude-founders/tmux-status.sh working"
                 }
               ]
             }
@@ -231,7 +231,7 @@ write_files:
               "hooks": [
                 {
                   "type": "command",
-                  "command": "~/.claude/tmux-status.sh working"
+                  "command": "~/.claude-founders/tmux-status.sh working"
                 }
               ]
             }
@@ -242,7 +242,7 @@ write_files:
               "hooks": [
                 {
                   "type": "command",
-                  "command": "~/.claude/tmux-status.sh working"
+                  "command": "~/.claude-founders/tmux-status.sh working"
                 }
               ]
             }
@@ -252,7 +252,7 @@ write_files:
               "hooks": [
                 {
                   "type": "command",
-                  "command": "~/.claude/tmux-status.sh input"
+                  "command": "~/.claude-founders/tmux-status.sh input"
                 }
               ]
             }
@@ -262,7 +262,7 @@ write_files:
               "hooks": [
                 {
                   "type": "command",
-                  "command": "~/.claude/tmux-status.sh waiting"
+                  "command": "~/.claude-founders/tmux-status.sh waiting"
                 }
               ]
             }
@@ -272,7 +272,7 @@ write_files:
               "hooks": [
                 {
                   "type": "command",
-                  "command": "~/.claude/tmux-status.sh clear"
+                  "command": "~/.claude-founders/tmux-status.sh clear"
                 }
               ]
             }
@@ -280,11 +280,11 @@ write_files:
         }
       }
 
-  - path: /root/.claude-A/settings.json
+  - path: /root/.claude-adrien/settings.json
     permissions: "0644"
     content: *claude_hooks
 
-  # zsh is tmux's default-shell. claudeA = adrien@ (~/.claude-A), claudeF = founders@ (~/.claude).
+  # zsh is tmux's default-shell. claudeA = adrien@ (~/.claude-adrien), claudeF = founders@ (~/.claude-founders).
   - path: /root/.zshrc
     permissions: "0644"
     content: |
@@ -293,7 +293,7 @@ write_files:
       export PATH=/root/.npm-global/bin:$PATH
 
       # Claude account wrappers, named the same on the laptop and this box:
-      # claudeA = adrien@ (~/.claude-A), claudeF = founders@ (~/.claude). They tag the
+      # claudeA = adrien@ (~/.claude-adrien), claudeF = founders@ (~/.claude-founders). They tag the
       # tmux pane with its account, cleared on exit along with the status circle.
       _claude_as() {
         local acct=$1; shift
@@ -303,8 +303,8 @@ write_files:
         [ -n "$TMUX" ] && tmux set -pu -t "$TMUX_PANE" @claude_pane_acct \; set -pu -t "$TMUX_PANE" @claude_pane_status
         return $ret
       }
-      claudeA() { CLAUDE_CONFIG_DIR="$HOME/.claude-A" _claude_as A "$@"; }
-      claudeF() { _claude_as F "$@"; }
+      claudeA() { CLAUDE_CONFIG_DIR="$HOME/.claude-adrien" _claude_as A "$@"; }
+      claudeF() { CLAUDE_CONFIG_DIR="$HOME/.claude-founders" _claude_as F "$@"; }
       # Bare `claude` is this machine's default account (adrien@ on the laptop).
       claude() { claudeF "$@"; }
 
@@ -344,7 +344,7 @@ runcmd:
   - |
     python3 - <<'PY'
     import json
-    for d, color, name in ((".claude", 35, "founders"), (".claude-A", 32, "adrien")):
+    for d, color, name in ((".claude-founders", 35, "founders"), (".claude-adrien", 32, "adrien")):
         p = f"/root/{d}/settings.json"
         s = json.load(open(p, encoding="utf-8"))
         s["statusLine"] = {"type": "command", "command": f"printf '\\033[1;{color}m👤 {name}\\033[0m'"}
