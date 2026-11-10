@@ -508,6 +508,18 @@ in
       mutable = true;
       executable = true;
     };
+    # Compatibility links: tools that hardcode ~/.claude / ~/.claude.json land
+    # in the adrien account. Out-of-store so they point at the live folder,
+    # never a store copy; force replaces the hand-made links. Nothing in
+    # home.file may target ".claude/..." -- it would write through the link.
+    ".claude" = {
+      source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.claude-adrien";
+      force = true;
+    };
+    ".claude.json" = {
+      source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.claude-adrien/.claude.json";
+      force = true;
+    };
 
     ".gitconfig" = {
       source = ./home/gitconfig;
