@@ -219,10 +219,12 @@ let
   # `uwsm stop` prints "Compositor is not running." and the session stays up.
   # Drop the uwsm branch so it falls through to `hyprctl dispatch exit`.
   # hyde-shell derives LIB_DIR/SHARE_DIR from its own path (bin/../lib), so the
-  # copy keeps HyDE's .local layout with lib and share linked back to pkgs.hyde.
+  # copy keeps HyDE's .local layout. lib/hyde must be patchedHydeLib: every
+  # `hyde-shell <script>` call (waybar's cpuinfo, menus...) runs from LIB_DIR,
+  # and linking it to pkgs.hyde silently bypassed all of patchedHydeLib's fixes.
   patchedHydeShell = pkgs.runCommand "hyde-shell" { } ''
-    mkdir -p $out/bin
-    ln -s ${pkgs.hyde}/Configs/.local/lib $out/lib
+    mkdir -p $out/bin $out/lib
+    ln -s ${patchedHydeLib} $out/lib/hyde
     ln -s ${pkgs.hyde}/Configs/.local/share $out/share
     sed '/^hyde-logout() {/,/^}/s/if uwsm check is-active; then/if false; then/' \
       ${pkgs.hyde}/Configs/.local/bin/hyde-shell > $out/bin/hyde-shell
