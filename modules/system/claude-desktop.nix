@@ -5,9 +5,17 @@
 let
   upstream = inputs.claude-desktop.packages.${pkgs.stdenv.hostPlatform.system}.claude-desktop;
 
+  # The flake's auto-update is broken (poeck/claude-desktop-nix-flake#1), so
+  # pin the official deb ourselves. 5.x links libpipewire at runtime.
   # Chromium picks basic_text on unknown desktops (Hyprland), which the app
   # refuses for storing the sign-in; point it at the Secret Service instead.
-  claude-desktop = upstream.overrideAttrs (old: {
+  claude-desktop = upstream.overrideAttrs (old: rec {
+    version = "5.1231.2";
+    src = pkgs.fetchurl {
+      url = "https://downloads.claude.ai/claude-desktop/apt/stable/pool/main/c/claude-desktop/claude-desktop_${version}_amd64.deb";
+      hash = "sha256-600Wya/wppY2bYhyj3T6VRNr58/ePB/jWvQGK0WVW28=";
+    };
+    buildInputs = old.buildInputs or [ ] ++ [ pkgs.pipewire ];
     preFixup = old.preFixup + ''
       gappsWrapperArgs+=(--add-flags --password-store=gnome-libsecret)
     '';
