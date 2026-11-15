@@ -15,6 +15,7 @@
     ./hypridle-recycle.nix
     ./theme-activation-env.nix
     ./tmux.nix
+    ./claude-accounts.nix
     ./common
   ];
 
