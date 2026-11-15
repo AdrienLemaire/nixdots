@@ -4,10 +4,15 @@
 # does on the laptop. The box has no home-manager, so a systemd timer re-applies
 # the same scripts hourly and at boot.
 #
+# Unlike the laptop, founders owns the real folders here and adrien links in:
+# the box runs Claude Code as root, where path-scoped allow rules are ignored,
+# so the account writing memory through a link gets a permission prompt on
+# every save. founders is the box's default account, so it gets the real ones.
+#
 # Usage: ./hetzner-claude-share.sh [ssh-host]     (default: md-atlas)
 #        SSH_OPTS="-i key" adds options to every ssh/scp call.
 # Idempotent. Copies the laptop's global CLAUDE.md as the box's shared rules.
-# The settings base (/root/.claude-adrien/settings-shared.json) stays on the box:
+# The settings base (/root/.claude-founders/settings-shared.json) stays on the box:
 # it holds work-org details and this repo is public. Without one, only memory
 # and rules are shared.
 set -euo pipefail
@@ -15,10 +20,14 @@ set -euo pipefail
 HOST="${1:-md-atlas}"
 read -ra OPTS <<<"${SSH_OPTS:-}"
 SCRIPTS="$(dirname "$0")/modules/hm/scripts"
-PRIMARY=/root/.claude-adrien
-SECONDARY=/root/.claude-founders
+PRIMARY=/root/.claude-founders
+SECONDARY=/root/.claude-adrien
 
 ssh "${OPTS[@]}" "$HOST" 'command -v jq >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -qq jq'
+# A linked primary CLAUDE.md would make the copy below write through the link
+# and the ln further down create a loop.
+# shellcheck disable=SC2029  # PRIMARY expands locally on purpose
+ssh "${OPTS[@]}" "$HOST" "[ ! -L $PRIMARY/CLAUDE.md ] || rm $PRIMARY/CLAUDE.md"
 
 for name in claude-share-memory claude-share-settings claude-accounts-check; do
   scp -q "${OPTS[@]}" "$SCRIPTS/$name.sh" "$HOST:/usr/local/bin/$name"
