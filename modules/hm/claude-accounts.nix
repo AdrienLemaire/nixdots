@@ -15,7 +15,7 @@ let
 
   shareMemory = mkScript "claude-share-memory" [ pkgs.coreutils pkgs.gnused pkgs.gnugrep pkgs.diffutils ];
   shareSettings = mkScript "claude-share-settings" [ pkgs.coreutils pkgs.jq pkgs.diffutils pkgs.gnused ];
-  accountsCheck = mkScript "claude-accounts-check" [ pkgs.coreutils ];
+  accountsCheck = mkScript "claude-accounts-check" [ pkgs.coreutils pkgs.jq ];
 in
 {
   home.packages = [ accountsCheck ];
