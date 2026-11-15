@@ -52,6 +52,12 @@ link_project() {
   local src="$secondary/projects/$project/memory"
   local dst="$primary/projects/$project/memory"
 
+  # A linked primary means the accounts were swapped: merging would copy the
+  # folder onto itself and leave a dangling link. Needs a manual migration.
+  if [ -L "$dst" ]; then
+    warn "$project: primary memory is itself a link, skipped"
+    return 0
+  fi
   mkdir -p -- "$dst" "$secondary/projects/$project" || return 1
   if [ -L "$src" ]; then
     [ "$(readlink -- "$src")" = "$dst" ] && return 0
