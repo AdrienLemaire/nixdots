@@ -56,6 +56,9 @@ for i in $(seq 1 60); do
 done
 echo
 
+echo ">> Sharing rules, memory and settings between the two Claude accounts..."
+SSH_OPTS="-i $SSH_PRIV" "$(dirname "$0")/hetzner-claude-share.sh" "root@$IP"
+
 cat <<EOF
 
 ============================================================
